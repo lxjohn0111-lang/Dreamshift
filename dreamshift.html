@@ -156,6 +156,77 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;background:var(--moon
 #clickgate{cursor:pointer;background:rgba(5,4,10,.35)}
 #clickgate p{font:300 italic 24px/1 var(--serif);letter-spacing:.12em;color:var(--moon-dim);animation:breathe 3.2s ease-in-out infinite}
 @keyframes breathe{0%,100%{opacity:.45}50%{opacity:1}}
+
+/* ---------- TOUCH CONTROLS & SMALL SCREENS ---------- */
+#touch{position:fixed;inset:0;z-index:5;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+#touch button{position:absolute;display:flex;align-items:center;justify-content:center;padding:0;border-radius:50%;cursor:pointer;
+  border:1px solid rgba(244,236,220,.34);background:rgba(10,8,18,.34);color:var(--moon);font:500 10px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);touch-action:none;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .2s,border-color .2s,opacity .25s}
+#touch button.down{transform:scale(.92);background:rgba(244,236,220,.2)}
+#touch button[hidden]{display:none}
+#t-act{width:86px;height:86px;right:calc(26px + env(safe-area-inset-right,0px));bottom:calc(28px + env(safe-area-inset-bottom,0px));font-size:11px}
+#t-act.on{border-color:var(--gold);background:rgba(233,199,142,.2);box-shadow:0 0 22px rgba(233,199,142,.25)}
+#t-act.grav{border-color:var(--rose);background:rgba(231,169,160,.2)}
+#t-act.idle{opacity:.38}
+#t-jump{width:62px;height:62px;right:calc(126px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px))}
+#t-swap{width:54px;height:54px;right:calc(42px + env(safe-area-inset-right,0px));bottom:calc(128px + env(safe-area-inset-bottom,0px));font-size:8px}
+#t-recall{width:46px;height:46px;right:calc(122px + env(safe-area-inset-right,0px));bottom:calc(102px + env(safe-area-inset-bottom,0px));font-size:7px}
+#t-pause{width:44px;height:44px;right:calc(14px + env(safe-area-inset-right,0px));top:calc(14px + env(safe-area-inset-top,0px));border-radius:12px;gap:5px}
+#t-pause i{display:block;width:3px;height:14px;background:var(--moon);border-radius:1px}
+#t-joy{position:absolute;width:124px;height:124px;margin:-62px 0 0 -62px;border-radius:50%;pointer-events:none;
+  left:calc(100px + env(safe-area-inset-left,0px));top:calc(100% - 96px - env(safe-area-inset-bottom,0px));
+  border:1px solid rgba(244,236,220,.24);background:radial-gradient(circle,rgba(244,236,220,.08),rgba(10,8,18,.18) 70%);opacity:.42;transition:opacity .2s}
+#t-joy.live{opacity:.95;transition:none}
+#t-joy i{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(244,236,220,.26);border:1px solid rgba(244,236,220,.6)}
+#t-tip{position:absolute;left:50%;top:calc(50% + 70px);transform:translateX(-50%);font:400 10px/1.6 var(--sans);letter-spacing:.22em;text-transform:uppercase;color:var(--moon-dim);text-align:center;white-space:nowrap;
+  text-shadow:0 1px 8px rgba(0,0,0,.9);opacity:0;transition:opacity 1s;pointer-events:none}
+#t-tip.on{opacity:1}
+.touchkeys,#rotatehint{display:none}
+.touch .touchkeys{display:block}
+.touch .keys,.touch #ability,.touch #saved,.touch #debug{display:none}
+.touch #frags{right:calc(72px + env(safe-area-inset-right,0px));top:calc(26px + env(safe-area-inset-top,0px))}
+.touch #objective{left:calc(18px + env(safe-area-inset-left,0px));top:calc(16px + env(safe-area-inset-top,0px));max-width:min(380px,52vw)}
+.touch #objective .o-k{font-size:8px;margin-bottom:6px}
+.touch #objective .o-t{font-size:16px}
+.touch #thought{font-size:18px;bottom:calc(20px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100vw - 370px))}
+.touch #prompt{font-size:11px;top:calc(50% + 26px)}
+.touch .foot{display:none}
+@media (orientation:portrait){
+  .touch #rotatehint{display:block;position:absolute;left:16px;right:16px;top:calc(22px + env(safe-area-inset-top,0px));text-align:center;font:400 9px/1.6 var(--sans);letter-spacing:.22em;text-transform:uppercase;color:var(--moon-faint)}
+  .touch #thought{width:calc(100vw - 40px);bottom:calc(196px + env(safe-area-inset-bottom,0px));font-size:19px}
+  .touch #objective{max-width:calc(100vw - 150px)}
+}
+@media (max-width:760px),(max-height:520px){
+  .panel{padding:24px 22px 20px;max-height:calc(100% - 20px);overflow-y:auto}
+  .panel h3{font-size:24px}
+  .panel .sub{margin-bottom:16px;font-size:9px;letter-spacing:.4em}
+  .row{padding:7px 0;gap:12px}
+  .row label{flex:0 0 118px;font-size:9px;letter-spacing:.2em;line-height:1.3}
+  .row output{font-size:15px;width:38px}
+  .seg button{padding:10px 0;font-size:9px;letter-spacing:.14em}
+  .pbtns{margin-top:18px;gap:20px}
+  .tbtn{padding:12px 6px}
+  .pstats{gap:24px;margin-bottom:12px}
+  .pstats b{font-size:22px}
+  .note{font-size:15px;margin-top:14px}
+  #menu{padding:0 0 calc(7vh + env(safe-area-inset-bottom,0px)) calc(7vw + env(safe-area-inset-left,0px))}
+  .logo{margin-bottom:3.5vh}
+  .mbtn{font-size:22px;padding:9px 0}
+  #titlecard{top:22%}
+  #titlecard .tc-main{font-size:clamp(22px,6vw,40px);letter-spacing:.22em;text-indent:.22em}
+  #titlecard .tc-over{margin-bottom:12px;font-size:9px}
+  #ending h3{font-size:clamp(26px,7vw,46px);margin-bottom:14px}
+  #ending .e-k{margin-bottom:12px}
+  #ending .e-lines{font-size:16px;min-height:0;max-width:92vw}
+  #ending .pstats{margin:16px 0 4px}
+  #ending .credit{margin-top:10px}
+}
+@media (max-width:600px){
+  .logo h1{font-size:11.5vw;letter-spacing:.16em}
+  .logo h2{font-size:10px;letter-spacing:.42em}
+  .logo h2::before{width:22px;margin-right:12px}
+}
+.screen{overflow-y:auto;justify-content:safe center}
 </style>
 </head>
 <body>
@@ -176,6 +247,15 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;background:var(--moon
   <div id="saved">The dream remembers</div>
   <div id="debug" class="hidden"></div>
 </div>
+<div id="touch" hidden>
+  <div id="t-joy"><i></i></div>
+  <div id="t-tip"></div>
+  <button id="t-pause" aria-label="Pause"><i></i><i></i></button>
+  <button id="t-recall" aria-label="Recall dreamt objects" hidden>Recall</button>
+  <button id="t-swap" aria-label="Switch ability" hidden>Grasp</button>
+  <button id="t-jump" aria-label="Jump">Jump</button>
+  <button id="t-act" aria-label="Interact" class="idle">Use</button>
+</div>
 <div id="bars" class="layer"><i></i><i></i></div>
 <div id="fade" class="layer"></div>
 
@@ -192,6 +272,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;background:var(--moon
     <button class="mbtn" id="m-settings">Settings</button>
   </div>
   <div class="foot">A first-person dream<br>Headphones recommended</div>
+  <div id="rotatehint">Turn your phone sideways for the widest view</div>
 </div>
 
 <div id="newgame" class="screen scrim">
@@ -229,6 +310,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;background:var(--moon
       <b>E</b><span>Interact</span><b>LMB</b><span>Dream ability</span>
       <b>Q</b><span>Switch ability</span><b>R</b><span>Recall dreamt objects</span>
     </div>
+    <p class="note touchkeys">Left thumb walks. Drag on the right to look. The round button acts on whatever is in the middle of the view.</p>
   </div>
 </div>
 
@@ -258,6 +340,9 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;background:var(--moon
 const $ = (s) => document.querySelector(s);
 const URLP = new URLSearchParams(location.search);
 const DEBUG = URLP.has('debug');
+/* phones & tablets: touch controls, lighter defaults */
+const TOUCH = URLP.has('touch') || (!!window.matchMedia && matchMedia('(pointer: coarse)').matches && (navigator.maxTouchPoints || 0) > 0);
+const TXT = (desk, touch) => TOUCH ? touch : desk;
 
 /* ------------------------------------------------------------------------------------------
    0. BOOT — load Three.js from a CDN (with fallbacks)
@@ -344,7 +429,7 @@ const Store = {
 const Settings = {
   KEY: 'dreamshift.settings.v1',
   d: { sens: 1, fov: 72, quality: 'high', master: 0.8, music: 0.75, sfx: 0.9, invert: 0, bob: 1 },
-  load() { const s = Store.get(this.KEY); if (s) Object.assign(this.d, s); if (URLP.get('quality')) this.d.quality = URLP.get('quality'); },
+  load() { const s = Store.get(this.KEY); if (TOUCH) { this.d.quality = 'low'; this.d.sens = 1.1; } if (s) Object.assign(this.d, s); if (URLP.get('quality')) this.d.quality = URLP.get('quality'); },
   save() { Store.set(this.KEY, this.d); },
 };
 Settings.load();
@@ -360,7 +445,7 @@ const SaveGame = {
    3. RENDERER & POST-PROCESSING (HDR scene target, SSAO, bloom, filmic grade)
    ------------------------------------------------------------------------------------------ */
 const QUALITY = {
-  low: { scale: 0.7, dprCap: 1, msaa: 0, shadow: 1024, hero: 512, ao: false, aoN: 0, aniso: 2, dust: 0.4 },
+  low: { scale: 0.7, dprCap: 1, msaa: 0, shadow: 1024, hero: 512, ao: false, aoN: 0, aniso: 2, dust: 0.4, heroShadow: false },
   medium: { scale: 0.85, dprCap: 1, msaa: 2, shadow: 2048, hero: 1024, ao: false, aoN: 0, aniso: 4, dust: 0.7 },
   high: { scale: 1.0, dprCap: 1, msaa: 4, shadow: 2048, hero: 1024, ao: true, aoN: 8, aniso: 8, dust: 1 },
   ultra: { scale: 1.0, dprCap: 1.5, msaa: 4, shadow: 4096, hero: 2048, ao: true, aoN: 12, aniso: 16, dust: 1 },
@@ -500,7 +585,7 @@ const Post = {
     this.resize(true);
   },
   resize(force) {
-    const dpr = Math.min(window.devicePixelRatio || 1, this.q.dprCap);
+    const dpr = Math.min(window.devicePixelRatio || 1, TOUCH ? Math.max(this.q.dprCap, 1.5) : this.q.dprCap);
     const cw = Math.max(2, Math.floor(window.innerWidth * dpr)), ch = Math.max(2, Math.floor(window.innerHeight * dpr));
     if (canvas.width !== cw || canvas.height !== ch || force) renderer.setSize(cw, ch, false);
     const w = Math.max(2, Math.floor(cw * this.q.scale * this.dyn)), h = Math.max(2, Math.floor(ch * this.q.scale * this.dyn));
@@ -912,6 +997,7 @@ const Lights = {
     if (this.heroCur && World.cur) { const n = find(World.cur.heroes, this.heroCur.pos); if (n) this.heroCur = n; }
   },
   setQuality(q) {
+    this.hero.castShadow = q.heroShadow !== false;
     for (const [l, s] of [[this.sun, q.shadow], [this.hero, q.hero]]) { l.shadow.mapSize.set(s, s); if (l.shadow.map) { l.shadow.map.dispose(); l.shadow.map = null; } }
   },
   update(dt, time) {
@@ -1286,6 +1372,7 @@ const P = {
     Input.dx = 0; Input.dy = 0;
     let mx = 0, mz = 0, sprint = false, jump = false;
     if (this.enabled) { mx = (Input.down('KeyD') || Input.down('ArrowRight') ? 1 : 0) - (Input.down('KeyA') || Input.down('ArrowLeft') ? 1 : 0); mz = (Input.down('KeyW') || Input.down('ArrowUp') ? 1 : 0) - (Input.down('KeyS') || Input.down('ArrowDown') ? 1 : 0); sprint = Input.down('ShiftLeft') || Input.down('ShiftRight'); jump = Input.jumpBuf > 0; }
+    if (this.enabled && Input.joy) { mx += Input.joy.x; mz += Input.joy.y; if (Input.joy.m > 0.94 && Input.joy.y > 0.55) sprint = true; }
     Input.jumpBuf = Math.max(0, Input.jumpBuf - dt);
     const up = this.up, fwd = this.forward(_t1), right = _t2.set(1, 0, 0).applyAxisAngle(_Y, this.yaw).applyQuaternion(this.frame);
     const wish = _t3.set(0, 0, 0).addScaledVector(fwd, mz).addScaledVector(right, mx); if (wish.lengthSq() > 1) wish.normalize();
@@ -1323,7 +1410,7 @@ const P = {
     const upv = _t1.set(0, 1, 0).applyQuaternion(this.viewFrame), rt = _t2.set(1, 0, 0).applyQuaternion(camera.quaternion);
     camera.position.copy(this.pos).addScaledVector(this.up, this.height / 2).addScaledVector(upv, this.eyeH - this.height / 2 + this.stepOff + by + this.landDip).addScaledVector(rt, bx);
     if (FX.shakeT > 0) { FX.shakeT -= dt; const a = FX.shakeAmt * sat(FX.shakeT / (FX.shakeDur || 0.5)); camera.position.x += (Math.sin(time * 71) + Math.sin(time * 113)) * a * 0.5; camera.position.y += Math.sin(time * 89) * a; _q1.setFromAxisAngle(_Z, Math.sin(time * 67) * a * 0.3); camera.quaternion.multiply(_q1); if (FX.shakeT <= 0) FX.shakeAmt = 0; }
-    const fov = Settings.d.fov + this.fovKick * 5 + (this.fovAdd || 0); if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
+    const fov = Settings.d.fov + this.fovKick * 5 + (this.fovAdd || 0) + (camera.aspect < 1 ? 16 : 0); if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
   },
 };
 const _Y = new V3(0, 1, 0), _X = new V3(1, 0, 0), _Z = new V3(0, 0, 1), pos0 = new V3();
@@ -1921,6 +2008,7 @@ const UI = {
     let cls = '', html = ''; const t = Interact.target, h = Grasp.held;
     if (h) { cls = 'hold'; const s = Grasp.socket; html = s ? (s.fit ? '<kbd>LMB</kbd>Let it belong here' : `<kbd>LMB</kbd>Release<em>${Grasp.tScale < s.min ? 'too small — step back' : 'too large — step closer'}</em>`) : '<kbd>LMB</kbd>Release'; }
     else if (t) { const p = typeof t.prompt === 'function' ? t.prompt(t) : t.prompt; if (t.kind === 'grasp') { cls = 'grasp'; html = '<kbd>LMB</kbd>' + p; } else if (t.kind === 'anchor') { cls = 'grav'; html = '<kbd>LMB</kbd>' + p; } else { cls = 'hot'; html = p ? '<kbd>E</kbd>' + p : ''; } }
+    if (TOUCH) html = html.replace(/<kbd>[^<]*<\/kbd>/g, ''); Touch.update();
     if (html !== this.lastPrompt) { this.lastPrompt = html; if (html) this.el.prompt.innerHTML = html; this.el.prompt.classList.toggle('on', !!html); }
     if (this.el.cross.className !== cls) this.el.cross.className = cls;
   },
@@ -1970,11 +2058,11 @@ const Game = {
     else { P.enabled = true; FX.fade(0, 2.2); Post.u.uLids.value = 0; const d = DIMS[mem.at.kind]; if (d) UI.title('Dimension ' + d.n, d.title); if (z.data.onArrive) z.data.onArrive(); }
     this.lock();
   },
-  lock() { if (this.nolock) { Input.locked = true; return; } if (document.pointerLockElement !== canvas) { const fail = () => this.freeLook(); try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(fail); } catch (e) { fail(); } } },
+  lock() { if (this.nolock || TOUCH) { Input.locked = true; return; } if (document.pointerLockElement !== canvas) { const fail = () => this.freeLook(); try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(fail); } catch (e) { fail(); } } },
   freeLook() { // pointer lock refused (e.g. inside an embedded frame): look by moving the mouse instead
     if (this.nolock || this.state !== 'playing') return; this.nolock = true; Input.locked = true; UI.screen(null); canvas.style.cursor = 'crosshair';
     UI.think('Mouse capture isn’t available here, so move the mouse to look. Esc pauses.', { once: 'freelook', delay: 0.5 }); },
-  pause() { if (this.state !== 'playing') return; this.state = 'paused'; this.save(false); Audio.suspend(true); $('#p-frag').textContent = this.fragCount() + ' / ' + FRAG_TOTAL; $('#p-seed').textContent = this.mem.seed; $('#p-time').textContent = fmtTime(this.time); const d = DIMS[this.mem.at.kind]; $('#p-where').textContent = d ? d.title : 'A room, at night'; UI.screen('pause'); if (document.pointerLockElement) document.exitPointerLock(); },
+  pause() { if (this.state !== 'playing') return; this.state = 'paused'; if (typeof Touch !== 'undefined') setTimeout(() => Touch.update(), 0); this.save(false); Audio.suspend(true); $('#p-frag').textContent = this.fragCount() + ' / ' + FRAG_TOTAL; $('#p-seed').textContent = this.mem.seed; $('#p-time').textContent = fmtTime(this.time); const d = DIMS[this.mem.at.kind]; $('#p-where').textContent = d ? d.title : 'A room, at night'; UI.screen('pause'); if (document.pointerLockElement) document.exitPointerLock(); },
   resume() { if (this.state !== 'paused') return; this.state = 'playing'; Audio.suspend(false); UI.screen(null); this.lock(); },
   toMenu() {
     this.save(false); this.state = 'menu'; this.running = false; Audio.suspend(false); UI.hud(false); P.enabled = false; P.cine = null; $('#bars').classList.remove('on'); Post.u.uLids.value = 0; Post.u.uFade.value = 0; Post.u.uInvert.value = 0;
@@ -2030,8 +2118,10 @@ $('#clickgate').addEventListener('click', () => { if (Game.state === 'playing') 
 document.addEventListener('pointerlockchange', () => { Input.locked = document.pointerLockElement === canvas; if (Input.locked && $('#clickgate').classList.contains('on')) UI.screen(null); if (!Input.locked && Game.state === 'playing' && !Game.nolock) Game.pause(); });
 document.addEventListener('pointerlockerror', () => Game.freeLook());
 canvas.addEventListener('click', () => { if (Game.state === 'playing' && !Input.locked) Game.lock(); });
-document.addEventListener('mousemove', (e) => { if (Input.locked && Game.state === 'playing') { Input.dx += clamp(e.movementX || 0, -160, 160); Input.dy += clamp(e.movementY || 0, -160, 160); } });
-document.addEventListener('mousedown', (e) => { if (Game.state !== 'playing' || !Input.locked) return; Audio.init(); if (e.button === 0) Interact.ability(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && Game.state === 'playing') Game.pause(); });
+const fromTouch = () => TOUCH && performance.now() - (Input.lastTouch || 0) < 1200;
+document.addEventListener('mousemove', (e) => { if (fromTouch()) return; if (Input.locked && Game.state === 'playing') { Input.dx += clamp(e.movementX || 0, -160, 160); Input.dy += clamp(e.movementY || 0, -160, 160); } });
+document.addEventListener('mousedown', (e) => { if (fromTouch()) return; if (Game.state !== 'playing' || !Input.locked) return; Audio.init(); if (e.button === 0) Interact.ability(); });
 document.addEventListener('wheel', () => { if (Game.state === 'playing') Game.toggleAbility(); }, { passive: true });
 document.addEventListener('keydown', (e) => {
   if (e.target && e.target.tagName === 'INPUT') { if (e.code === 'Enter') $('#ng-go').click(); return; }
@@ -2079,7 +2169,7 @@ function tick(dt) {
 let _last = performance.now(), _fps = 60, _dbgT = 0;
 function renderFrame() { camera.updateMatrixWorld(); Post.render(World.time); }
 function frame(now) {
-  requestAnimationFrame(frame); const raw = (now - _last) / 1000; _last = now; if (Game.manual) return;
+  requestAnimationFrame(frame); const raw = (now - _last) / 1000; _last = now; if (typeof Touch !== 'undefined') Touch.update(); if (Game.manual) return;
   const dt = Math.min(0.05, Math.max(0.0005, raw));
   if (Game.state !== 'paused') tick(dt); renderFrame();
   _fps = lerp(_fps, 1 / Math.max(raw, 1e-4), 0.05); if (Game.state === 'playing' && document.hasFocus()) Post.adapt(raw * 1000);
@@ -2211,11 +2301,11 @@ ZONES.intro = function (origin, ctx) {
   });
   Z.trigger(-2.4, 0, -10.2, 2.4, 2.7, -6.5, { once: true, enter: () => UI.think('Three-seventeen. Like the clock.') });
   Z.spawn.pos.set(origin.x - 0.35, origin.y + 0.02, origin.z + 0.55); Z.spawn.yaw = -0.5;
-  D.menuCam = (t) => { camera.position.set(origin.x + 1.25 + Math.sin(t * 0.07) * 0.35, origin.y + 1.38 + Math.sin(t * 0.05) * 0.05, origin.z - 0.9 + Math.cos(t * 0.06) * 0.3); camera.up.set(0, 1, 0); camera.lookAt(origin.x - 1.0, origin.y + 0.95, origin.z + 1.5); if (Math.abs(camera.fov - 50) > 0.01) { camera.fov = 50; camera.updateProjectionMatrix(); } };
+  D.menuCam = (t) => { camera.position.set(origin.x + 1.25 + Math.sin(t * 0.07) * 0.35, origin.y + 1.38 + Math.sin(t * 0.05) * 0.05, origin.z - 0.9 + Math.cos(t * 0.06) * 0.3); camera.up.set(0, 1, 0); camera.lookAt(origin.x - 1.0, origin.y + 0.95, origin.z + 1.5); const mf = camera.aspect < 1 ? 78 : 50; if (Math.abs(camera.fov - mf) > 0.01) { camera.fov = mf; camera.updateProjectionMatrix(); } };
   D.opening = () => {
     P.enabled = false; Post.u.uLids.value = 1; Post.u.uFade.value = 1; FX.fade(0, 1.5); UI.title('The night before', '3:17 a.m.', 4.2); P.pitch = -0.25;
     after(2.2, () => FX.lids(0.25, 1.8, () => FX.lids(0.9, 0.35, () => FX.lids(0, 2.4))), Z);
-    after(5.2, () => { P.enabled = true; UI.think('The boxes are packed. Tomorrow this won’t be my room.'); UI.objective('Look around. Move with W\u00a0A\u00a0S\u00a0D.'); }, Z);
+    after(5.2, () => { P.enabled = true; UI.think('The boxes are packed. Tomorrow this won’t be my room.'); UI.objective(TXT('Look around. Move with W\u00a0A\u00a0S\u00a0D.', 'Left thumb walks. Drag on the right to look around.')); }, Z);
     after(4.0, () => Audio.motif(0.05, 'toy', 0.5), Z);
   };
   D.onArrive = () => { UI.objective(D.stage >= 3 ? 'There is a door at the end that was never there' : 'Leave the room'); };
@@ -2383,7 +2473,7 @@ ZONES.hub = function (origin, ctx) {
       onGrab: () => { UI.think('It is exactly as big as it looks.', { once: 'g1' }); UI.objective('Look where it should stand, then let go'); }, onRelease: (o) => { if (o.scale > 0.6) UI.think('Far away, it has to be bigger to look the same.', { once: 'g2' }); else UI.think('Small again. It depends on where I hold it from.', { once: 'g3' }); } });
     Z.data.graspMax = 40;
   } else { Props.vase(k.sub({ p: [4.6, 0.84, zH - 2.4] }), { color: 0x7a3b33 }); }
-  Z.trigger(-8, -1, zL - 0.5, 8, 4, zH, { once: true, enter: () => { if (!solved && !mem.abilities.grasp) { Game.grantAbility('grasp'); UI.think('The stairs are missing. No — not missing. Just small.'); UI.objective('Left mouse button: grasp what the dream offers'); } else if (!mem.abilities.grasp) Game.grantAbility('grasp'); if (solved) UI.objective(allDone ? 'The elevator is listening now' : 'Choose a door'); Z.atmo.fogD = 0.024; } });
+  Z.trigger(-8, -1, zL - 0.5, 8, 4, zH, { once: true, enter: () => { if (!solved && !mem.abilities.grasp) { Game.grantAbility('grasp'); UI.think('The stairs are missing. No — not missing. Just small.'); UI.objective(TXT('Left mouse button: grasp what the dream offers', 'Aim at it and tap the round button to grasp it')); } else if (!mem.abilities.grasp) Game.grantAbility('grasp'); if (solved) UI.objective(allDone ? 'The elevator is listening now' : 'Choose a door'); Z.atmo.fogD = 0.024; } });
   Z.trigger(-8, FY - 0.05, zF, 8, FY + 4, zL - 0.4, { once: true, enter: () => { if (Game.solve('hubStairs')) { UI.think('Four doors. Each one is somewhere I have been.'); Audio.sfx('socket', P.pos); } UI.objective(allDone ? 'The elevator is listening now' : 'Choose a door'); } });
   // ---------- "the same painting": a frame that wants its picture back (silhouette matching)
   if (mem.abilities.grasp || visit > 0) {
@@ -2801,7 +2891,7 @@ ZONES.impossible = function (origin, ctx) {
   if (Dream.visited('mall')) deco([-16, 16, -34], [0, 0.6, 0.5], 1, (d) => Props.text(d, 'THIS WAY UP', 8, 1.4, { tex: { color: '#3fffe0', glow: '#19e0c8', sans: true, weight: 300, size: 140, spacing: 20, w: 1024 }, mul: 3, side: THREE.DoubleSide }));
   if (Dream.visited('giant')) deco([-30, -20, -6], [0.4, 0.8, 1.9], 1, (d) => { letterBlock(d, 0, 0, 0, 5, 'A', 0xd94a3d, 0, true); });
   // ---- guidance
-  Z.trigger(-3, -1, -12, 3, 4, -4.5, { once: true, enter: () => { Game.grantAbility('gravity'); UI.think('The floor ends. The wall does not. The glyph on it is… an invitation.'); UI.objective('Left mouse on a glyph: decide which way is down'); } });
+  Z.trigger(-3, -1, -12, 3, 4, -4.5, { once: true, enter: () => { Game.grantAbility('gravity'); UI.think('The floor ends. The wall does not. The glyph on it is… an invitation.'); UI.objective(TXT('Left mouse on a glyph: decide which way is down', 'Aim at a glyph and tap the round button: decide which way is down')); } });
   Z.trigger(-4, 2, -12, 4, 14, -9.5, { once: true, enter: () => { if (P.up.z > 0.9) { UI.think('Down is an opinion. I have just changed mine.'); UI.objective('Walk the wall. There is a room built on it.'); } } });
   { const a = wp(-5, 0, -26).add(origin), b = wp(5, 10, -16).add(origin); const bx = new THREE.Box3().setFromPoints([a, b]); Z.trigs.push({ min: bx.min, max: bx.max, inside: false, on: true, once: true, enter: () => { if (!mem.puzzles.impPlate) { UI.think('A bedroom, tipped on its side. The exit is a hatch in what is currently a wall.'); UI.objective('The plate on the far wall wants weight. Choose a different down.'); } } }); }
   { const a = p3.pt(8, 0, -42).add(origin), b = p3.pt(32, 6, -1).add(origin); const bx = new THREE.Box3().setFromPoints([a, b]); Z.trigs.push({ min: bx.min, max: bx.max, inside: false, on: true, once: true, enter: () => { UI.think('Out through the floor, and onto another floor. It is very consistent about being inconsistent.'); UI.objective('Find the next down — a glyph, far below the far edge'); } }); }
@@ -3022,6 +3112,75 @@ ZONES.final = function (origin, ctx) {
   Z.spawn.pos.set(origin.x, origin.y + 0.02, origin.z - 1.2); Z.spawn.yaw = PI; Z.bounds = new THREE.Box3(Z.w(-90, -38, -30), Z.w(90, 110, 150));
   return Z.finalize();
 };
+
+/* ------------------------------------------------------------------------------------------
+   23. TOUCH CONTROLS — floating stick (left), drag-to-look (right), one context button that does
+   whatever the dream offers in the middle of the view (use, grasp, release, fall).
+   ------------------------------------------------------------------------------------------ */
+const Touch = {
+  on: TOUCH, joyId: null, lookId: null, ox: 0, oy: 0, lx: 0, ly: 0, R: 54, vis: null, lbl: '', cls: '', tipT: 0,
+  el: { root: $('#touch'), joy: $('#t-joy'), knob: $('#t-joy i'), act: $('#t-act'), jump: $('#t-jump'), swap: $('#t-swap'), recall: $('#t-recall'), pause: $('#t-pause'), tip: $('#t-tip') },
+  init() {
+    if (!this.on) return; document.documentElement.classList.add('touch');
+    const sl = $('#s-sens').closest('.row').querySelector('label'); if (sl) sl.textContent = 'Look sensitivity';
+    const root = this.el.root;
+    const btnOf = (t) => t && t.closest ? t.closest('button') : null;
+    root.addEventListener('touchstart', (e) => {
+      Input.lastTouch = performance.now(); Audio.init(); e.preventDefault();
+      for (const t of e.changedTouches) {
+        if (t.identifier === this.joyId || t.identifier === this.lookId) continue;
+        const b = btnOf(t.target); if (b) { this.press(b); continue; }
+        if (this.joyId === null && t.clientX < innerWidth * 0.45) { this.joyId = t.identifier; this.ox = t.clientX; this.oy = t.clientY; const j = this.el.joy; j.style.left = this.ox + 'px'; j.style.top = this.oy + 'px'; j.classList.add('live'); this.moveJoy(t.clientX, t.clientY); }
+        else if (this.lookId === null) { this.lookId = t.identifier; this.lx = t.clientX; this.ly = t.clientY; }
+      }
+    }, { passive: false });
+    root.addEventListener('touchmove', (e) => {
+      Input.lastTouch = performance.now(); e.preventDefault();
+      for (const t of e.changedTouches) {
+        if (t.identifier === this.joyId) this.moveJoy(t.clientX, t.clientY);
+        else if (t.identifier === this.lookId) { const k = 1.75; Input.dx += (t.clientX - this.lx) * k; Input.dy += (t.clientY - this.ly) * k; this.lx = t.clientX; this.ly = t.clientY; }
+      }
+    }, { passive: false });
+    const end = (e) => { Input.lastTouch = performance.now(); for (const t of e.changedTouches) { if (t.identifier === this.joyId) this.releaseJoy(); else if (t.identifier === this.lookId) this.lookId = null; } root.querySelectorAll('button.down').forEach(b => b.classList.remove('down')); };
+    root.addEventListener('touchend', end); root.addEventListener('touchcancel', end);
+    root.addEventListener('contextmenu', (e) => e.preventDefault());
+    for (const b of root.querySelectorAll('button')) b.addEventListener('click', () => { if (performance.now() - (Input.lastTouch || 0) > 800) this.press(b); }); // mouse testing on a desktop with ?touch=1
+  },
+  moveJoy(x, y) {
+    let dx = x - this.ox, dy = y - this.oy; const d = Math.hypot(dx, dy), R = this.R; if (d > R) { dx *= R / d; dy *= R / d; }
+    this.el.knob.style.transform = `translate(${dx}px,${dy}px)`; const m = Math.min(1, d / R), dz = 0.12, s = m < dz ? 0 : (m - dz) / (1 - dz) / Math.max(m, 1e-6);
+    Input.joy = { x: dx / R * s, y: -dy / R * s, m };
+  },
+  releaseJoy() { this.joyId = null; Input.joy = null; const j = this.el.joy; j.classList.remove('live'); j.style.left = ''; j.style.top = ''; this.el.knob.style.transform = ''; },
+  press(b) {
+    b.classList.add('down'); setTimeout(() => b.classList.remove('down'), 160);
+    if (b === this.el.pause) { Game.pause(); return; }
+    if (Game.state !== 'playing' || !P.enabled) return;
+    if (b === this.el.act) this.action();
+    else if (b === this.el.jump) Input.jumpBuf = 0.14;
+    else if (b === this.el.swap) Game.toggleAbility();
+    else if (b === this.el.recall) this.recall();
+  },
+  action() {
+    Interact.update(); if (Grasp.held) { Interact.ability(); return; }
+    const t = Interact.target; if (!t) return; if (t.kind === 'use') Interact.use(); else Interact.ability();
+  },
+  recall() { if (!Game.mem.abilities.grasp || !World.cur) return; let n = 0; for (const g of World.cur.grasps) if (!g.socketed && !g.held && !g.noRecall && g.pos.distanceTo(g.home.pos) > 0.3) { g.recall(); n++; } if (n) UI.think('Things went back to where I first dreamt them.', { once: 'recall' }); },
+  update() {
+    if (!this.on || !Game.mem) return;
+    const vis = Game.state === 'playing'; if (vis !== this.vis) { this.vis = vis; this.el.root.hidden = !vis; if (!vis) { this.releaseJoy(); this.lookId = null; } }
+    if (!vis) return;
+    const t = Interact.target, h = Grasp.held, m = Game.mem; let lbl = 'Use', cls = 'idle';
+    if (h) { lbl = Grasp.socket && Grasp.socket.fit ? 'Place' : 'Release'; cls = 'on'; }
+    else if (t) { if (t.kind === 'grasp') { lbl = 'Grasp'; cls = 'on'; } else if (t.kind === 'anchor') { lbl = 'Fall'; cls = 'grav'; } else { lbl = 'Use'; cls = 'on'; } }
+    if (lbl !== this.lbl) { this.lbl = lbl; this.el.act.textContent = lbl; } if (cls !== this.cls) { this.cls = cls; this.el.act.className = cls; }
+    const both = m.abilities.grasp && m.abilities.gravity; this.el.swap.hidden = !both; if (both) { const s = m.ability === 'grasp' ? 'Grasp' : 'Gravity'; if (this.el.swap.textContent !== s) this.el.swap.textContent = s; }
+    this.el.recall.hidden = !m.abilities.grasp;
+    if (!this.tipShown && P.enabled && m.at.kind === 'intro') { this.tipShown = true; this.el.tip.textContent = 'Left thumb: walk  ·  right thumb: look'; this.el.tip.classList.add('on'); setTimeout(() => this.el.tip.classList.remove('on'), 7000); }
+  },
+};
+Touch.init();
+window.__T = Touch;
 
 /* ------------------------------------------------------------------------------------------
    99. BOOT + QA HOOKS
