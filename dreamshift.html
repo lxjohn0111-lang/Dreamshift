@@ -2110,16 +2110,16 @@ const NIGHT_VIEW = () => canvasTex(256, 256, (g, w, h) => { const gr = g.createL
 /* The bedroom shell is used twice: where the dream begins, and where it ends. */
 function buildBedroom(Z, o = {}) {
   const k = Z.k, H = 2.7, wp = ['wallpaper', { color: o.wall || 0x6f7f8a }], trim = 'paintWhite', mem = Game.mem;
-  k.box('woodFloor', -2.4, -0.2, -2.25, 2.4, 0, 2.25, { col: { surf: 'wood' }, cast: false }); k.box(['plaster', { color: 0xdcd6ca }], -2.6, H, -2.45, 2.6, H + 0.2, 2.45, { col: true });
+  k.box('woodFloor', -2.4, -0.2, -2.25, 2.4, 0, 2.25, { col: { surf: 'wood' }, cast: false }); const wk = o.walls || {}, kS = wk.s || k, kW = wk.w || k, kE = wk.e || k, kC = wk.c || k; kC.box(['plaster', { color: 0xdcd6ca }], -2.6, H, -2.45, 2.6, H + 0.2, 2.45, { col: true });
   const wopt = (side) => ({ side, base: trim, crown: trim, surf: 'stone' });
-  k.wall('x', wp, 2.35, -2.6, 2.6, 0, H, 0.2, [], wopt(-1));                                                // south
-  k.wall('z', wp, -2.5, -2.45, 2.45, 0, H, 0.2, [{ a: -1.3, b: 0.1, y0: 0.9, y1: 2.2 }], wopt(1));           // west + window
-  k.wall('z', wp, 2.5, -2.45, 2.45, 0, H, 0.2, o.eastDoor === false ? [] : [{ a: -1.5, b: -0.55, y1: 2.1 }], wopt(-1)); // east + the door that goes nowhere
+  kS.wall('x', wp, 2.35, -2.6, 2.6, 0, H, 0.2, [], wopt(-1));                                                // south
+  kW.wall('z', wp, -2.5, -2.45, 2.45, 0, H, 0.2, [{ a: -1.3, b: 0.1, y0: 0.9, y1: 2.2 }], wopt(1));           // west + window
+  kE.wall('z', wp, 2.5, -2.45, 2.45, 0, H, 0.2, o.eastDoor === false ? [] : [{ a: -1.5, b: -0.55, y1: 2.1 }], wopt(-1)); // east + the door that goes nowhere
   // window, night beyond, curtains
-  Props.window(k.sub({ p: [-2.5, 0.9, -0.6], ry: PI / 2 }), 1.4, 1.3, { nx: 2, ny: 2 });
-  const view = Z.tex(o.viewTex ? o.viewTex() : NIGHT_VIEW()); Z.data.viewMat = Props.decal(k, view, 5, 4, { p: [-3.4, 1.7, -0.6], ry: PI / 2, mul: o.viewMul || 0.55, transparent: false });
-  k.geo(cyl(0.012, 0.012, 1.9, 8), 'brass', { p: [-2.36, 2.3, -0.6], r: [PI / 2, 0, 0] });
-  Props.curtain(k.sub({ p: [-2.34, 0.25, -1.42], ry: PI / 2 }), 0.42, 2.05, { color: o.curtain || 0x394a66 }); Props.curtain(k.sub({ p: [-2.34, 0.25, 0.24], ry: PI / 2 }), 0.42, 2.05, { color: o.curtain || 0x394a66 });
+  Props.window(kW.sub({ p: [-2.5, 0.9, -0.6], ry: PI / 2 }), 1.4, 1.3, { nx: 2, ny: 2 });
+  if (!o.noView) { const view = Z.tex(o.viewTex ? o.viewTex() : NIGHT_VIEW()); Z.data.viewMat = Props.decal(k, view, 5, 4, { p: [-3.4, 1.7, -0.6], ry: PI / 2, mul: o.viewMul || 0.55, transparent: false }); }
+  kW.geo(cyl(0.012, 0.012, 1.9, 8), 'brass', { p: [-2.36, 2.3, -0.6], r: [PI / 2, 0, 0] });
+  Props.curtain(kW.sub({ p: [-2.34, 0.25, -1.42], ry: PI / 2 }), 0.42, 2.05, { color: o.curtain || 0x394a66 }); Props.curtain(kW.sub({ p: [-2.34, 0.25, 0.24], ry: PI / 2 }), 0.42, 2.05, { color: o.curtain || 0x394a66 });
   // bed, nightstand, the moon lamp
   Props.bed(k.sub({ p: [-1.6, 0, 1.2], ry: PI }), { w: 1.4, duvet: ['fabric', { color: o.duvet || 0x44566f }], throwMat: ['fabric', { color: 0xa85a3c }] });
   Props.nightstand(k.sub({ p: [-0.58, 0, 1.98], ry: PI }));
@@ -2130,7 +2130,7 @@ function buildBedroom(Z, o = {}) {
   Props.wardrobe(k.sub({ p: [2.08, 0, 1.25], ry: -PI / 2 }));
   Props.rug(k.sub({ p: [0.1, 0, 0.1] }), 2.2, 1.5, [0x3c4a5c, 0xc9b98a, 0x8a4a3c], { tile: 1.1 });
   const pr = Dream.rng('bedroom-art');
-  Props.picture(k.sub({ p: [0.1, 1.6, 2.25], ry: PI }), 0.5, 0.62, Z.tex(paintingTex('moon', pr)), { frame: 'woodDark' }); Props.picture(k.sub({ p: [2.4, 1.55, 0.1], ry: -PI / 2 }), 0.4, 0.5, Z.tex(paintingTex('door', pr)), { frame: 'wood' });
+  Props.picture(kS.sub({ p: [0.1, 1.6, 2.25], ry: PI }), 0.5, 0.62, Z.tex(paintingTex('moon', pr)), { frame: 'woodDark' }); Props.picture(kE.sub({ p: [2.4, 1.55, 0.1], ry: -PI / 2 }), 0.4, 0.5, Z.tex(paintingTex('door', pr)), { frame: 'wood' });
   k.geo(cyl(0.2, 0.2, 0.03, 24), 'brass', { p: [0, H - 0.015, 0] }); k.geo(lathe([[0.001, -0.17], [0.09, -0.16], [0.16, -0.1], [0.185, -0.03]], 24), ['glass', { opacity: 0.5, color: 0xd8d8d0 }], { p: [0, H, 0], cast: false });
   // moon lamp (dynamic: it is the heart of the story)
   const lampOn = o.lampOn !== undefined ? o.lampOn : true;
@@ -2140,8 +2140,8 @@ function buildBedroom(Z, o = {}) {
   const vl = Z.light(-0.5, 0.95, 1.8, 0xffcf96, lampOn ? 9 : 0.0, 9, { prio: 4 });
   Z.data.lamp = { on: lampOn, moon, moonMat, halo, vl, set(on, quiet) { this.on = on; if (!quiet) Audio.sfx('switch', Z.w(-0.58, 0.75, 1.98)); const a = on ? 0 : 1; tween(0.5, (t) => { const v = on ? t : 1 - t; moonMat.color.set(0xffe9c4).multiplyScalar(lerp(0.16, 3.2, v)); halo.material.color.set(0xffd9a0).multiplyScalar(0.5 * v); vl.int = 9 * v; }, { zone: Z }); } };
   // moonlight through the window (shadow-casting hero light)
-  Z.hero([-5.6, 3.6, -1.9], [0.6, 0, 0.5], 0x9db8ff, o.moonInt || 150, { angle: 0.36, pen: 0.5, dist: 16, range: 40 });
-  makeShaft(Z, [-2.4, 0.9, -1.3, -2.4, 2.2, 0.1], [0.4, 0.0, -0.9, 0.9, 0.0, 1.3], 0x9db8ff, 0.16);
+  Z.hero([-5.6, 3.6, -1.9], [0.6, 0, 0.5], o.moonCol || 0x9db8ff, o.moonInt || 150, { angle: 0.36, pen: 0.5, dist: 16, range: 40 });
+  Z.data.shaft = makeShaft(Z, [-2.4, 0.9, -1.3, -2.4, 2.2, 0.1], [0.4, 0.0, -0.9, 0.9, 0.0, 1.3], o.moonCol || 0x9db8ff, 0.16);
   makeDust(Z, -2.3, 0.2, -2.2, 2.3, 2.5, 2.2, 160, 0xcfdcff, 1);
   return { H, wp, trim };
 }
@@ -2401,8 +2401,8 @@ ZONES.hub = function (origin, ctx) {
   // ---------- corridor events
   if (event === 'stretch') { D.loops = 0;
     Z.onUpdate(() => { if (D.stretchDone) return; const lz = P.pos.z - origin.z, f = camera.getWorldDirection(_t1);
-      if (lz < -22 && f.z < -0.25) { P.pos.z += 4; P.lastSafe.pos.z += 4; Lights.shift(0, 0, 4); D.loops++; if (D.loops === 5) UI.think('This corridor is exactly as long as I look at it.'); if (D.loops === 11) UI.think('Maybe if I didn’t watch where I was going…'); if (D.loops === 18) UI.objective('Turn your back on it. Walk backwards.'); }
-      else if (lz < -26) { D.stretchDone = true; P.pos.z -= 28; P.lastSafe.pos.z -= 28; Lights.shift(0, 0, -28); Audio.sfx('shiftSoft'); after(0.8, () => UI.think('It only keeps its distance while it is watched.'), Z); UI.objective(null); } });
+      if (lz < -26) { D.stretchDone = true; if (lz > -30) { P.pos.z -= 28; P.lastSafe.pos.z -= 28; Lights.shift(0, 0, -28); Audio.sfx('shiftSoft'); after(0.8, () => UI.think('It only keeps its distance while it is watched.'), Z); } UI.objective(null); }
+      else if (lz < -22 && f.z < -0.25) { P.pos.z += 4; P.lastSafe.pos.z += 4; Lights.shift(0, 0, 4); D.loops++; if (D.loops === 5) UI.think('This corridor is exactly as long as I look at it.'); if (D.loops === 11) UI.think('Maybe if I didn’t watch where I was going…'); if (D.loops === 18) UI.objective('Turn your back on it. Walk backwards.'); } });
     Z.trigger(-1.6, 0, -12, 1.6, 3, -8, { once: true, enter: () => UI.think('Every door says 317.') });
   }
   if (dark) { const ph = Audio.emitter(Z.w(1.7, 1, -18), 'phone', 0.7); Z.sounds.push(ph); let rang = true;
@@ -2423,14 +2423,6 @@ function dreamExit(Z, kind, x, y, z, o = {}) {
   return new Threshold(Object.assign({ zoneA: Z, x: Z.origin.x + x, y: Z.origin.y + y, z: Z.origin.z + z, prompt: 'Open — the hotel, again', style: { number: '317', mat: 'woodDark' },
     build: (og) => { Game.finishDream(kind); return ZONES.hub(og, { visit: Game.mem.done.length }); }, onArrive: (B) => Game.arrive(B, 'hub', Game.mem.done.length) }, o));
 }
-/* TEMP final stub */
-ZONES.final = function (origin, ctx) {
-  const Z = new Zone('final', origin, { atmo: { sky: 1, fog: [0.1, 0.08, 0.2], fogD: 0.01, skyTop: [0.03, 0.03, 0.15], skyHor: [0.5, 0.3, 0.5], skyBot: [0.1, 0.1, 0.2], stars: 1, env: 'dusk', envInt: 0.8, hemiInt: 0.5, amb: 'final' }, enclosed: false }); const k = Z.k;
-  Z.data.liftLight = elevatorCabin(Z, k); Z.data.lift = elevatorDoors(Z, k); k.box('stone', -4, -0.5, 0, 4, 0, 20, { col: true });
-  after(4, () => Z.data.lift.to(1), Z);
-  Z.interact({ obj: Z.hitBox(0, 1, 18, 1, 2, 1), prompt: 'Wake', use: () => Game.ending('wake') });
-  Z.spawn.pos.set(origin.x, origin.y + 0.02, origin.z - 1.3); Z.spawn.yaw = PI; Z.bounds = new THREE.Box3(Z.w(-60, -40, -40), Z.w(60, 60, 80)); return Z.finalize();
-};
 
 /* ------------------------------------------------------------------------------------------
    17. SHARED SKY-WORLD PIECES: floating islands, cloud sea, cumulus towers
@@ -2516,7 +2508,7 @@ ZONES.sky = function (origin, ctx) {
   const gm = ['grass', { color: { golden: 0xb9b27a, violet: 0x98a0b4, pearl: 0xa6bc9c }[mood], id: 'isl' }], io = { top: gm };
   const iA = makeIsland(Z, k, ...P_A, 10, rng, io), iB = makeIsland(Z, k, ...P_B, 7.2, rng, io), iC = makeIsland(Z, k, ...P_C, 6.2, rng, io), iD = makeIsland(Z, k, ...P_D, 8, rng, io);
   k.box('stone', -1.9, -0.7, -3.4, 1.9, 0, 0.0, { col: { surf: 'stone' } }); k.box('stone', -2.2, -0.9, -3.0, 2.2, -0.14, 0.35); stonePortal(k.sub({ p: [0, 0, 0] }));
-  if (ctx.standalone) { Props.doorLeaf(Z.kit({ p: [-0.5, 0, 0] }), 1.0, 2.1, { mat: 'woodDark', number: '317' }); Z.col(-0.5, 0, -0.08, 0.5, 2.1, 0.06, {}); } else Z.col(-0.5, 0, 0.35, 0.5, 2.1, 0.5, {});
+  if (ctx.standalone) { Props.doorLeaf(Z.kit({ p: [-0.5, 0, 0] }), 1.0, 2.1, { mat: 'woodDark', number: '317' }); Z.col(-0.5, 0, -0.08, 0.5, 2.1, 0.06, {}); }
   scatterIsland(k, iA, ...P_A, 10, rng, { clear: [[0, -2, 3], [2.2, -15.5, 1.6], [-1, -18, 2]] }); scatterIsland(k, iB, ...P_B, 7.2, rng, { clear: [[-2, -36, 2], [-6.5, -37.5, 1.5], [-1, -30, 2]], tufts: 60 });
   scatterIsland(k, iC, ...P_C, 6.2, rng, { clear: [[P_C[0], P_C[2], 3]], tufts: 50, rocks: 4 }); scatterIsland(k, iD, ...P_D, 8, rng, { clear: [[P_D[0], P_D[2] - 6, 3]], tufts: 70 });
   const lc = mood === 'violet' ? [0xb86a8a, 0xd08a9a, 0x9a5a80] : mood === 'pearl' ? [0xe8ecd8, 0xd0dcc0, 0xf0f0e0] : [0xd9a04c, 0xc97a3c, 0xe0b85c];
@@ -2612,12 +2604,12 @@ ZONES.sky = function (origin, ctx) {
 /* ------------------------------------------------------------------------------------------
    19. DIMENSION 05 — THE GIANT ROOM  (the bedroom again, at the scale it had when it was the whole world)
    ------------------------------------------------------------------------------------------ */
-function letterBlock(k, x, y, z, s, ch, col, ry = 0) {
+function letterBlock(k, x, y, z, s, ch, col, ry = 0, noCol = false) {
   const bk = k.sub({ p: [x, y + s / 2, z], ry }), tex = k.zone.tex(textTex(ch, { w: 256, h: 256, size: 190, color: '#' + new Col3(col).getHexString(), weight: 500 }));
   bk.geo(rboxGeo(s, s, s, s * 0.06, 2), ['woodPale', { tile: 3 }], { keepUV: false });
   for (let i = 0; i < 4; i++) Props.decal(bk.sub({ ry: i * PI / 2 }), tex, s * 0.74, s * 0.74, { p: [0, 0, s / 2 + 0.004], lit: true }); Props.decal(bk, tex, s * 0.74, s * 0.74, { p: [0, s / 2 + 0.004, 0], r: [-PI / 2, 0, 0], lit: true });
   for (let i = 0; i < 4; i++) { const fk = bk.sub({ ry: i * PI / 2 }), m = ['matte', { color: col, roughness: 0.5, id: 'lb' + col }], e = s * 0.43, w = s * 0.04; fk.box(m, -e, -e, s / 2, e, -e + w, s / 2 + 0.006); fk.box(m, -e, e - w, s / 2, e, e, s / 2 + 0.006); fk.box(m, -e, -e, s / 2, -e + w, e, s / 2 + 0.006); fk.box(m, e - w, -e, s / 2, e, e, s / 2 + 0.006); }
-  k.col(x - s * 0.71, y, z - s * 0.71, x + s * 0.71, y + s, z + s * 0.71, { surf: 'wood' }).min.set(k.zone.origin.x + x - s / 2, k.zone.origin.y + y, k.zone.origin.z + z - s / 2); const c = k.zone.cols[k.zone.cols.length - 1]; c.max.set(k.zone.origin.x + x + s / 2, k.zone.origin.y + y + s, k.zone.origin.z + z + s / 2);
+  if (!noCol) k.col(x - s / 2, y, z - s / 2, x + s / 2, y + s, z + s / 2, { surf: 'wood' });
 }
 ZONES.giant = function (origin, ctx) {
   const mem = Game.mem, rng = Dream.rng('giant'), lampOn = mem.choices.lamp !== 'off', S = 12;
@@ -2740,7 +2732,7 @@ ZONES.impossible = function (origin, ctx) {
   const anchor = (kit, x, y, z, nx, ny, nz, o = {}) => new Anchor(Z, Object.assign({ p: kit.pt(x, y, z).toArray(), n: dirOf(kit, nx, ny, nz) }, o));
   // ---- arrival slab P0
   k.box(blk, -3, -0.6, -12, 3, 0, 0.5, { col: { surf: 'stone' } }); k.box(st, -3.3, -1.0, -12, 3.3, -0.6, 0.8); stonePortal(k, { mat: st });
-  if (ctx.standalone) { Props.doorLeaf(Z.kit({ p: [-0.5, 0, 0] }), 1.0, 2.1, { mat: 'woodDark', number: '317' }); Z.col(-0.5, 0, -0.08, 0.5, 2.1, 0.06, {}); } else Z.col(-0.5, 0, 0.35, 0.5, 2.1, 0.5, {});
+  if (ctx.standalone) { Props.doorLeaf(Z.kit({ p: [-0.5, 0, 0] }), 1.0, 2.1, { mat: 'woodDark', number: '317' }); Z.col(-0.5, 0, -0.08, 0.5, 2.1, 0.06, {}); }
   k.box(acc, -0.9, 0, -12, 0.9, 0.015, -0.6, { cast: false }); for (const s of [-1, 1]) { Props.column(k.sub({ p: [s * 2.5, 0, -3.2] }), 0.22, 3.6, st, { seg: 16 }); k.box(st, s * 2.5 - 0.5, 3.6, -3.7, s * 2.5 + 0.5, 3.8, -2.7); }
   Props.bench(k.sub({ p: [-2.3, 0, -8], ry: PI / 2 }), { seat: st, leg: acc });
   // ---- W1: a wall that is waiting to be a floor
@@ -2803,7 +2795,7 @@ ZONES.impossible = function (origin, ctx) {
   for (let i = 0; i < 9; i++) { const a = rng.f() * TAU, r = 50 + rng.f() * 90; deco([Math.cos(a) * r, rng.range(-50, 60), -20 + Math.sin(a) * r], [rng.f() * 3, rng.f() * 3, rng.f() * 3], 2 + rng.f() * 4, (d) => { if (i % 3 === 0) d.stairs(st, -1.5, 1.5, 0, -9, 0, 4.5, 9, { col: false, solid: false }); else if (i % 3 === 1) { d.box(st, -2, 0, -2, 2, 0.5, 2); d.box(acc, -0.4, 0.5, -0.4, 0.4, 5, 0.4); } else { for (const s of [-1, 1]) d.box(st, s * 1.5 - 0.3, 0, -0.3, s * 1.5 + 0.3, 4, 0.3); d.box(st, -2, 4, -0.35, 2, 4.6, 0.35); } }); }
   if (Dream.visited('sky')) makeCumulus(Z, [[-60, -40, -60, 18], [70, 10, -90, 22], [20, 60, 40, 16]], rng);
   if (Dream.visited('mall')) deco([-16, 16, -34], [0, 0.6, 0.5], 1, (d) => Props.text(d, 'THIS WAY UP', 8, 1.4, { tex: { color: '#3fffe0', glow: '#19e0c8', sans: true, weight: 300, size: 140, spacing: 20, w: 1024 }, mul: 3, side: THREE.DoubleSide }));
-  if (Dream.visited('giant')) deco([-30, -20, -6], [0.4, 0.8, 1.9], 1, (d) => { letterBlock(d, 0, 0, 0, 5, 'A', 0xd94a3d); k.zone.cols.pop().on = false; });
+  if (Dream.visited('giant')) deco([-30, -20, -6], [0.4, 0.8, 1.9], 1, (d) => { letterBlock(d, 0, 0, 0, 5, 'A', 0xd94a3d, 0, true); });
   // ---- guidance
   Z.trigger(-3, -1, -12, 3, 4, -4.5, { once: true, enter: () => { Game.grantAbility('gravity'); UI.think('The floor ends. The wall does not. The glyph on it is… an invitation.'); UI.objective('Left mouse on a glyph: decide which way is down'); } });
   Z.trigger(-4, 2, -12, 4, 14, -9.5, { once: true, enter: () => { if (P.up.z > 0.9) { UI.think('Down is an opinion. I have just changed mine.'); UI.objective('Walk the wall. There is a room built on it.'); } } });
@@ -2921,6 +2913,109 @@ ZONES.mall = function (origin, ctx) {
   Z.trigger(-9, GY - 0.2, 2 * MZ, 9, RY, MZ - 1, { once: true, enter: () => { UI.think('From up here the reflection looks like the original.'); UI.objective('A lit sign at the far end says ROOMS'); } });
   D.onArrive = () => { UI.think('It smells of floor polish and a radio left on in another room.', { delay: 1.2 }); UI.objective(solved ? 'Step through the mirror' : 'Walk the concourse'); };
   Z.spawn.pos.set(origin.x, origin.y + 0.02, origin.z - 1.4); Z.bounds = new THREE.Box3(Z.w(-40, -30, 2 * MZ - 60), Z.w(40, 40, 30));
+  return Z.finalize();
+};
+
+/* ------------------------------------------------------------------------------------------
+   22. DIMENSION 06 — THE FINAL DREAM  (everything at once; the path assembles itself; the house is waiting)
+   ------------------------------------------------------------------------------------------ */
+function houseShape(k, o = {}) { // exterior of the house at full size, centred on its footprint, floor at y=0 (used for the model)
+  const clad = ['paintWhite', { color: 0xece4d6, tile: 1.6, id: 'clad' }], roof = ['matte', { color: 0x8a3f36, roughness: 0.7, id: 'roofm' }];
+  k.box(clad, -2.75, -0.2, -2.6, 2.75, 3.0, 2.6); for (const s of [-1, 1]) k.geo(new THREE.BoxGeometry(3.7, 0.14, 5.8), roof, { p: [s * 1.45, 3.85, 0], r: [0, 0, -s * 0.62] }); k.box(clad, -2.6, 3.0, -2.55, 2.6, 3.4, 2.55); k.box(clad, -1.5, 3.4, -2.55, 1.5, 4.1, 2.55); k.box(clad, -0.6, 4.1, -2.55, 0.6, 4.6, 2.55);
+  k.box(['matte', { color: 0x7a3830, id: 'chim' }], 1.2, 3.6, 0.8, 1.8, 5.3, 1.4); k.box(['glow', { color: 0xffd9a0, mul: 2.4 }], -2.77, 0.9, -1.3, -2.74, 2.2, 0.1, { cast: false }); k.box('woodDark', -0.5, 0, -2.63, 0.5, 2.1, -2.59);
+}
+function buildHome(og, F) { // the bedroom again — reached at the very end
+  const mem = Game.mem, lampOn = mem.choices.lamp !== 'off', n = Game.fragCount(), lucidOK = n >= 14;
+  const Z = new Zone('home', og, { atmo: { fog: [0.03, 0.03, 0.05], fogD: 0.02, sky: 1, skyTop: F.atmo.skyTop, skyHor: F.atmo.skyHor, skyBot: F.atmo.skyBot, stars: F.atmo.stars, aurora: F.atmo.aurora, clouds: F.atmo.clouds, cloudCol: F.atmo.cloudCol, glow: F.atmo.glow, sunDir: F.atmo.sunDir, sunCol: F.atmo.sunCol, sunInt: 0.6,
+    hemiSky: [0.5, 0.5, 0.7], hemiGnd: [0.22, 0.17, 0.14], hemiInt: 0.3, env: 'warm', envInt: 0.35, exposure: 1.05, bloom: 0.09, vig: 0.44, contrast: 1.05, shadow: [0.01, 0.0, 0.03], high: [0.03, 0.015, -0.01], amb: 'room', reverb: 0.25 } });
+  const k = Z.k, D = Z.data, mk = () => Z.kit({ dyn: true }), walls = { s: mk(), w: mk(), e: mk(), c: mk() }, kN = mk();
+  const R = buildBedroom(Z, { walls, eastDoor: false, noView: true, lampOn: true, moonCol: 0xffc9a0, moonInt: 60, wall: 0x6f7f8a }), H = R.H, clad = ['paintWhite', { color: 0xece4d6, tile: 1.6, id: 'clad' }], roof = ['matte', { color: 0x8a3f36, roughness: 0.7, id: 'roofm' }];
+  kN.wall('x', R.wp, -2.35, -2.6, 2.6, 0, H, 0.2, [{ a: -0.5, b: 0.5, y1: 2.1 }], { side: 1, base: R.trim, crown: R.trim, col: false }); kN.wall('x', clad, -2.5, -2.75, 2.75, -0.2, 3.0, 0.1, [{ a: -0.5, b: 0.5, y0: -0.2, y1: 2.1 }], { col: false }); Props.doorFrame(kN.sub({ p: [0, 0, -2.4] }), 1.0, 2.1, 0.3, 'woodDark', {});
+  walls.s.box(clad, -2.75, -0.2, 2.45, 2.75, 3.0, 2.55); walls.e.box(clad, 2.6, -0.2, -2.55, 2.7, 3.0, 2.55); walls.w.wall('z', clad, -2.65, -2.55, 2.55, -0.2, 3.0, 0.1, [{ a: -1.3, b: 0.1, y0: 0.9, y1: 2.2 }], { col: false });
+  for (const s of [-1, 1]) walls.c.geo(new THREE.BoxGeometry(3.7, 0.14, 5.8), roof, { p: [s * 1.45, 3.85, 0], r: [0, 0, -s * 0.62] }); walls.c.box(clad, -2.6, 2.9, -2.55, 2.6, 3.4, -2.45); walls.c.box(clad, -2.6, 2.9, 2.45, 2.6, 3.4, 2.55); walls.c.box(clad, -1.5, 3.4, -2.55, 1.5, 4.1, -2.45); walls.c.box(clad, -1.5, 3.4, 2.45, 1.5, 4.1, 2.55); walls.c.box(['matte', { color: 0x7a3830, id: 'chim' }], 1.2, 3.6, 0.8, 1.8, 5.3, 1.4);
+  const piv = (kit, px, pz) => { const g = kit.done(), p = new THREE.Group(); p.position.set(px, 0, pz); g.position.set(-px, 0, -pz); p.add(g); Z.add(p); return p; };
+  const pS = piv(walls.s, 0, 2.45), pW = piv(walls.w, -2.6, 0), pE = piv(walls.e, 2.6, 0), pN = piv(kN, 0, -2.45), pC = piv(walls.c, 0, 0);
+  const wc = [Z.col(-2.6, 0, 2.25, 2.6, H, 2.45, {}), Z.col(-2.6, 0, -2.45, -2.4, H, 2.45, {}), Z.col(2.4, 0, -2.45, 2.6, H, 2.45, {}), Z.col(-2.6, 0, -2.45, -0.5, H, -2.25, {}), Z.col(0.5, 0, -2.45, 2.6, H, -2.25, {}), Z.col(-0.5, 2.1, -2.45, 0.5, H, -2.25, {}), Z.col(-2.6, H, -2.45, 2.6, H + 0.2, 2.45, {})];
+  k.box('stone', -0.8, -0.2, -3.1, 0.8, 0, -2.45, { col: { surf: 'stone' } }); const lf = Z.kit({ p: [-0.5, 0, -2.3], ry: -1.9 }); Props.doorLeaf(lf, 1.0, 2.1, { mat: 'woodDark', number: '317' });
+  // the mobile: one shard for every fragment carried this far
+  const shards = []; for (let i = 0; i < n; i++) { const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), new THREE.MeshBasicMaterial({ color: hex(0xffd9a0, 5) })); m.scale.set(0.7, 1.5, 0.7); Z.add(m, true); shards.push({ m, a: i / Math.max(1, n) * TAU, r: 0.35 + (i % 3) * 0.16, y: 1.75 + (i % 4) * 0.09, sp: 0.25 + (i % 5) * 0.05 }); } if (n) Z.light(-1.6, 1.9, 1.2, 0xffcf96, 1 + n * 0.25, 5, { prio: 2 });
+  D.frag = makeFragment(Z, 'final3', 0.6, 1.3, 0.4);
+  const end = (kind) => { if (D.ended) return; D.ended = true; UI.objective(null); P.enabled = false;
+    if (kind === 'wake') { D.lamp.set(false); UI.think('Goodnight, moon.', { clear: true }); after(2.2, () => FX.lids(1, 3.2, () => Game.ending('wake')), Z); Audio.motif(0.06, 'toy', 0.55); }
+    else if (kind === 'drift') { UI.think('Not yet. There are more rooms.', { clear: true }); Audio.sfx('doorOpen', og); after(1.6, () => FX.fade(1, 2.6, [0, 0, 0], () => Game.ending('drift')), Z); }
+    else { // lucid: the room opens like a box, and it is morning
+      UI.think('Open it. Let all of it in.', { clear: true }); Audio.sfx('shift'); Audio.motif(0.09, 'bell', 0.5); for (const c of wc) c.on = false; if (D.shaft) D.shaft.visible = false;
+      const a0 = makeAtmo(Z.atmo), a1 = makeAtmo(Object.assign({}, Z.atmo, { skyTop: [0.2, 0.42, 0.78], skyHor: [1.0, 0.76, 0.5], skyBot: [0.9, 0.62, 0.5], stars: 0, aurora: 0, sunDir: [-0.92, 0.22, 0.1], sunCol: [1.0, 0.82, 0.6], sunInt: 3.2, disc: 0.035, glow: 1.2, clouds: 0.6, cloudCol: [1.0, 0.86, 0.7], hemiSky: [0.7, 0.75, 0.95], hemiGnd: [0.6, 0.45, 0.35], hemiInt: 0.7, fog: [0.95, 0.75, 0.55], fogD: 0.004, env: 'sky', envInt: 0.8, exposure: 1.0, amb: 'sky' }));
+      tween(7, (t) => { mixAtmo(Z.atmo, a0, a1, t); mixAtmo(F.atmo, a0, a1, t); }, { zone: Z, ease: EASE.sine });
+      tween(5.5, (t) => { pW.rotation.z = t * PI / 2; pE.rotation.z = -t * PI / 2; pS.rotation.x = t * PI / 2; pN.rotation.x = -t * PI / 2; pC.position.y = t * t * 26; pC.rotation.z = t * 0.5; pC.rotation.x = t * 0.3; }, { zone: Z, ease: EASE.io, delay: 0.8 });
+      tween(6, (t) => { for (const s of shards) { s.rise = t * t * 40; s.r += 0.004; } }, { zone: Z, delay: 1.5 }); after(4.2, () => UI.think('Morning, in every direction.'), Z); after(10.5, () => Game.ending('lucid'), Z); }
+  };
+  Z.interact({ obj: Z.hitBox(-0.58, 0.76, 1.98, 0.36, 0.42, 0.36), prompt: 'Turn off the moon — and wake', use: () => end('wake') });
+  Z.interact({ obj: Z.hitBox(0, 1.05, -2.2, 1.0, 2.1, 0.5), prompt: 'Leave again — keep dreaming', on: () => P.pos.z - og.z > -2.1, use: () => end('drift') });
+  Z.interact({ obj: Z.hitBox(-2.42, 1.55, -0.6, 0.2, 1.3, 1.4), prompt: () => lucidOK ? 'Open the window — take all of it with you' : 'The window is stuck (it wants more of what I remember)', use: () => { if (lucidOK) end('lucid'); else { Audio.sfx('locked', og); UI.think('It won’t open. Too much of the dream is still out there in pieces. (' + n + ' of ' + FRAG_TOTAL + ')'); } } });
+  Z.onUpdate((dt, t) => { for (const s of shards) { const a = s.a + t * s.sp; s.m.position.set(-1.6 + Math.cos(a) * s.r, s.y + Math.sin(t * 0.8 + s.a) * 0.05 + (s.rise || 0), 1.2 + Math.sin(a) * s.r); s.m.rotation.y = t + s.a; } D.lamp.moon.rotation.y = 1 + Math.sin(t * 0.2) * 0.1; });
+  Z.bounds = new THREE.Box3(Z.w(-200, -150, -200), Z.w(200, 200, 200)); Z.spawn.pos.copy(og); Z.finalize(); return Z;
+}
+ZONES.final = function (origin, ctx) {
+  const mem = Game.mem, rng = Dream.rng('final'), lampOn = mem.choices.lamp !== 'off', warm = Dream.warm(), drift = Dream.drift();
+  const Z = new Zone('final', origin, { enclosed: false, atmo: { sky: 1, fog: warm >= 0 ? [0.42, 0.26, 0.4] : [0.16, 0.2, 0.42], fogD: 0.0034, skyTop: [0.02, 0.025, 0.11], skyHor: warm >= 0 ? [0.72, 0.36, 0.42] : [0.3, 0.34, 0.66], skyBot: warm >= 0 ? [0.3, 0.16, 0.3] : [0.12, 0.14, 0.34],
+    sunDir: [-0.5, 0.5, 0.7], sunCol: lampOn ? [0.9, 0.82, 1.0] : [0.55, 0.5, 1.0], sunInt: 1.5, disc: 0, glow: 0.3, stars: 1.2, aurora: drift > 0 ? 0.7 : 0.25, clouds: 0.45, cloudCol: warm >= 0 ? [0.85, 0.55, 0.62] : [0.5, 0.56, 0.9],
+    hemiSky: [0.4, 0.42, 0.8], hemiGnd: [0.3, 0.2, 0.3], hemiInt: 0.55, env: 'dusk', envInt: 0.75, exposure: 1.08, bloom: 0.1, ao: 0.7, sat: 1.08, contrast: 1.05, vig: 0.38, shadowSize: 60, shadow: [0.01, 0.0, 0.04], high: [0.03, 0.0, 0.02], amb: 'final', reverb: 0.8 } });
+  const k = Z.k, D = Z.data; D.graspMax = 40;
+  const carpet = ['fabric', { carpet: [0x5a1f26, 0xc9a45c, 0x2e4a44], tile: 1.6, id: 'fc' }], st = ['stoneSmooth', { color: 0xf3eadb, id: 'fst' }];
+  // ---- the cabin (identical to the hotel's, so the ride is seamless) and the pier
+  D.liftLight = elevatorCabin(Z, k); D.lift = elevatorDoors(Z, k);
+  for (const s of [-1, 1]) k.box('brass', s * 0.86 - 0.06, 0, 0, s * 0.86 + 0.06, 2.31, 0.06); k.box('brass', -0.92, 2.25, 0, 0.92, 2.37, 0.06); k.box('woodDark', -1.3, -0.3, -2.6, 1.3, 2.75, -2.52); for (const s of [-1, 1]) k.box('woodDark', s * 1.26 - 0.04, -0.3, -2.6, s * 1.26 + 0.04, 2.75, 0);
+  k.box(carpet, -1.6, -0.25, 0.0, 1.6, 0, 14, { col: { surf: 'carpet' } }); k.box('woodDark', -1.75, -0.4, 0.0, 1.75, -0.25, 14.1);
+  for (let i = 0; i < 3; i++) for (const s of [-1, 1]) { const z = 3 + i * 4; Props.decorDoor(k.sub({ p: [s * 1.6, 0, z], ry: -s * PI / 2 }), { number: String(317 + i * 2 + (s > 0 ? 1 : 0)) }); k.col(s * 1.6 - 0.08, 0, z - 0.6, s * 1.6 + 0.08, 2.2, z + 0.6, { surf: 'wood' }); k.geo(cyl(0.03, 0.04, 2.0, 8), 'brass', { p: [s * 1.55, 1.0, z + 2] }); Props.sconce(k.sub({ p: [s * 1.5, 1.85, z + 2], ry: -s * PI / 2 }), { int: 6 }); }
+  // ---- pieces of every dream, arriving as they are needed
+  const segs = [];
+  const seg = (zTrig, build) => { const kit = Z.kit({ dyn: true }), cols = []; build(kit, (x0, y0, z0, x1, y1, z1, o) => { const c = kit.col(x0, y0, z0, x1, y1, z1, Object.assign({ world: true }, o || {})); c.on = false; cols.push(c); return c; });
+    const g = kit.done(), off = v3(rng.range(8, 20) * rng.sign(), rng.range(-14, 12), rng.range(6, 18)), rot = [rng.range(-1.2, 1.2), rng.range(-1.5, 1.5), rng.range(-1.2, 1.2)]; g.position.copy(off); g.rotation.set(...rot); g.scale.setScalar(0.5); Z.add(g); const s = { g, cols, zTrig, here: false, off, rot }; segs.push(s); return s; };
+  seg(4, (kk, col) => { kk.box('terrazzo', -2.4, -0.3, 14, 2.4, 0, 26); col(-2.4, -0.3, 14, 2.4, 0, 26, { surf: 'marble' }); const sk = kk.sub({ p: [-2.4, 0, 20], ry: PI / 2 }); sk.box(['matte', { color: 0x101216, id: 'mdk' }], -3.2, 3.2, 0, 3.2, 4.0, 0.14); Props.text(sk, 'OPEN LATE', 5.2, 0.6, { p: [0, 3.6, 0.15], tex: { color: '#3fffe0', glow: '#19e0c8', sans: true, weight: 300, size: 96, spacing: 14, w: 1024, h: 128 }, mul: 3.2 }); for (let r = 0; r < 15; r++) sk.box('steel', -3, 0.02 + r * 0.205, 0, 3, 0.17 + r * 0.205, 0.06 + (r % 2) * 0.03, { cast: false }); for (const e of [-1, 1]) sk.box(['plaster', { color: 0xcfd6d4, id: 'mw' }], e * 3.3 - 0.2, 0, -0.1, e * 3.3 + 0.2, 4.0, 0.2); sk.light(0, 3.2, 1.5, 0x19e0c8, 9, 10); col(-2.6, 0, 16.6, -2.3, 4, 23.4, {}); Props.bench(kk.sub({ p: [1.6, 0, 22], ry: PI / 2 }), { col: false }); });
+  seg(14, (kk, col) => { kk.stairs(st, -2, 2, 26, 38, 0, 3, 12, { col: false, base: -0.4 }); col(-2, -0.4, 26, 2, 3, 38, { surf: 'stone', ramp: { axis: 'z', lo: 0.12, hi: 3 } }); for (const s of [-1, 1]) for (const z of [27, 37]) Props.column(kk.sub({ p: [s * 2.4, z === 27 ? -0.3 : 2.7, z] }), 0.2, 3.2, st, { col: false, seg: 12 }); });
+  seg(26, (kk, col) => { const r2 = Dream.rng('fi'); makeIsland({ col() { }, origin }, kk, 0, 3, 45.5, 8.2, r2, { col: false }); col(-3.2, 2, 38, 3.2, 3, 53, { surf: 'grass' }); col(-6, 2, 41, 6, 3, 50, { surf: 'grass' }); makeTree(kk, -4.2, 3, 44, 1.3, r2, [0xd9a04c, 0xc97a3c, 0xe0b85c]); });
+  seg(40, (kk, col) => { kk.box(['woodFloor', { tile: 15.6, id: 'gf' }], -3.4, 2.4, 53, 3.4, 3, 60); col(-3.4, 2.4, 53, 3.4, 3, 60, { surf: 'wood' }); letterBlock(kk, -2.6, 3, 55.4, 1.3, 'Z', 0x3d7fd9, 0.3, true); col(-3.25, 3, 54.75, -1.95, 4.3, 56.05, { surf: 'wood' }); letterBlock(kk, 2.7, 3, 57.2, 1.0, 'z', 0xe8b53a, -0.4, true); col(2.2, 3, 56.7, 3.2, 4, 57.7, { surf: 'wood' }); });
+  D.frag1 = makeFragment(Z, 'final1', 0, 4.3, 46, { hidden: true });
+  const arrive = (s, instant) => { if (s.here) return; s.here = true; const fin = () => { s.g.position.set(0, 0, 0); s.g.rotation.set(0, 0, 0); s.g.scale.setScalar(1); for (const c of s.cols) c.on = true; if (s === segs[2] && D.frag1) D.frag1.reveal(); }; if (instant) return fin(); Audio.sfx('whoosh', Z.w(0, 2, s.zTrig + 12), 1.4);
+    tween(1.5, (t) => { s.g.position.copy(s.off).multiplyScalar(1 - t); s.g.rotation.set(s.rot[0] * (1 - t), s.rot[1] * (1 - t), s.rot[2] * (1 - t)); s.g.scale.setScalar(0.5 + 0.5 * t); }, { zone: Z, ease: EASE.out5, done: () => { fin(); Audio.sfx('thud', Z.w(0, 1, s.zTrig + 12), 1.6); } }); };
+  // ---- the wall of doors (a corridor stood on end) and the summit above it
+  k.box(carpet, -3, 3, 60, 3, 37, 60.9, { col: { surf: 'carpet' }, tile: 1.6 }); k.box('woodDark', -3.3, 2.4, 60.9, 3.3, 37.4, 61.3); for (const s of [-1, 1]) k.box('woodDark', s * 3.15 - 0.15, 3, 59.9, s * 3.15 + 0.15, 37, 60.9);
+  const wk = k.sub({ p: [0, 3, 60], r: [-PI / 2, 0, 0] }); // local (x,y,z) → world (x, 3+z, 60-y)
+  for (let i = 0; i < 6; i++) { const s = i % 2 ? 1 : -1, lz = 4 + i * 5; Props.decorDoor(wk.sub({ p: [s * 2.86, 0, lz], ry: -s * PI / 2 }), { number: String(301 + i * 16) }); Props.sconce(wk.sub({ p: [-s * 2.86, 1.8, lz], ry: s * PI / 2 }), { int: 6 }); }
+  D.aW = new Anchor(Z, { p: [0, 8.5, 60], n: [0, 0, -1], size: 2.2 });
+  const SY = 28; k.box('grass', -9, SY - 0.8, 40, 9, SY, 58, { col: { surf: 'grass' }, tile: 3 }); k.box('grass', -9, SY - 0.8, 58, -1.6, SY, 60, { col: { surf: 'grass' }, tile: 3 }); k.box('grass', 1.6, SY - 0.8, 58, 9, SY, 60, { col: { surf: 'grass' }, tile: 3 }); k.box('rock', -9.3, SY - 2.2, 39.7, 9.3, SY - 0.8, 58); k.box('rock', -9.3, SY - 2.2, 58, -1.6, SY - 0.8, 60); k.box('rock', 1.6, SY - 2.2, 58, 9.3, SY - 0.8, 60);
+  { const r2 = Dream.rng('summit'); const isl = { inside: (x, z) => Math.abs(x) < 8.6 && z > 40.4 && z < 59.6 }; scatterIsland(k, isl, 0, SY, 50, 12, r2, { clear: [[0, 50, 5.5], [3, 56, 1.5], [-5, 55, 2]], tufts: 110, rocks: 0 }); makeTree(k, -6.8, SY, 43, 1.25, r2, [0xd9a04c, 0xc97a3c, 0xe0b85c]); makeTree(k, 7, SY, 56, 1.0, r2, [0xd9a04c, 0xc97a3c, 0xe0b85c]); }
+  const hatch = Z.mesh(new THREE.BoxGeometry(3.2, 0.8, 2), 'grass', { p: [6, SY - 0.4, 59] }), hatchCol = Z.col(-1.6, SY - 0.8, 58, 1.6, SY, 60, { surf: 'grass' }); hatchCol.on = false; hatch.visible = false;
+  D.aS = new Anchor(Z, { p: [-5, SY, 55.5], n: [0, 1, 0], size: 2.6 });
+  // ---- the house, small enough to carry
+  k.geo(lathe([[0.001, 0], [0.5, 0], [0.52, 0.08], [0.3, 0.16], [0.24, 0.8], [0.4, 0.9], [0.42, 0.98], [0.001, 0.98]], 20), st, { p: [3.4, SY, 56], keepUV: false }); k.col(3, SY, 55.6, 3.8, SY + 0.98, 56.4, { surf: 'stone' });
+  const hk = Z.kit({ dyn: true }); houseShape(hk.sub({ p: [0, -2.4, 0] })); const hG = hk.done(); hG.add(makeHalo(0xffe0b0, 9, 0.35));
+  const HC = [0, SY + 0.2 + 2.4, 50];
+  D.house = new GraspObj(Z, { name: 'house', group: hG, half: [2.75, 2.5, 2.65], pos: [3.4, SY + 0.98 + 2.5 * 0.13 + 0.01, 56], scale: 0.13, surf: 'wood', mass: 100, maxS: 1.6, minS: 0.03, prompt: 'Grasp the little house', onGrab: () => { UI.think('The house. All of it, small enough to lose in a pocket.', { once: 'fi3' }); UI.objective('It belongs where the grass is flattened'); } });
+  const hGhost = ghostMesh(new THREE.BoxGeometry(5.5, 4.8, 5.3), 0xffe6c0); hGhost.position.set(...HC); Z.add(hGhost, true);
+  const hSock = new Socket(Z, { pos: HC, accepts: 'house', min: 0.7, max: 1.35, snap: 1, radius: 3, lock: true, onFill: () => { hGhost.visible = false; hGhost.userData._hold = true; Game.solve('finalHouse'); FX.flash(0.6); FX.ripple(0.5, 2); Audio.sfx('shift'); Audio.motif(0.07, 'bell', 0.5, -1); hG.visible = false; D.home = buildHome(Z.w(0, SY + 0.2, 50), Z); Game.warm(); UI.think('Home. Exactly the size it always was.'); UI.objective('Go in'); if (D.frag2) D.frag2.reveal(); } });
+  D.frag2 = makeFragment(Z, 'final2', -6.5, SY + 1.3, 47, { hidden: true });
+  Z.onUpdate((dt, t) => { if (!hSock.filled) { hGhost.userData.line.opacity = 0.3 + hSock.hover * 0.6 + Math.sin(t * 2) * 0.1; hGhost.userData.line.color.set(hSock.fit && hSock.hover > 0.3 ? 0xffd070 : 0xf4ecdc).multiplyScalar(1.5 + hSock.hover); hGhost.userData.fill.opacity = 0.03 + hSock.hover * 0.1; }
+    const lz = P.pos.z - origin.z, ly = P.pos.y - origin.y; for (const s of segs) if (!s.here && lz > s.zTrig) arrive(s);
+    if (!D.hatch && P.up.z < -0.9 && ly > SY + 1.9) { D.hatch = true; hatch.visible = true; Audio.sfx('rumble', Z.w(0, SY, 59), 0.4); tween(0.9, (u) => { hatch.position.x = 6 * (1 - u); }, { zone: Z, ease: EASE.out, done: () => { hatchCol.on = true; } }); UI.think('The way closed behind me. Dreams tidy up after themselves.'); UI.objective('Decide which way is down, once more'); }
+    if (D.home && !D.home.dead) { const hx = P.pos.x - D.home.origin.x, hz = P.pos.z - D.home.origin.z, hy = P.pos.y - D.home.origin.y, ins = Math.abs(hx) < 2.5 && Math.abs(hz) < 2.4 && hy > -0.5 && hy < 3; const want = ins ? D.home : Z; if (World.cur !== want && !D.home.data.ended) { World.cur = want; if (ins && !D.inside) { D.inside = true; UI.think('It is all here. The lamp. The window. The door I came in by.'); UI.objective('Choose how the dream ends'); } } } });
+  if (mem.puzzles.finalHouse) { D.house.pos.copy(hSock.pos); D.house.scale = 1; hSock.filled = true; D.house.socketed = hSock; D.house.sync(); hG.visible = false; hGhost.visible = false; hGhost.userData._hold = true; D.home = buildHome(Z.w(0, SY + 0.2, 50), Z); D.frag2 && D.frag2.reveal(); }
+  // ---- backdrop: all the dreams, adrift
+  makeCloudSea(Z, -46); const cl = []; for (let i = 0; i < 14; i++) { const a = rng.f() * TAU, r = 130 + rng.f() * 380; cl.push([Math.cos(a) * r, -30 + rng.f() * 80, 40 + Math.sin(a) * r, 16 + rng.f() * 26]); } makeCumulus(Z, cl, rng);
+  const far = Z.kit({}); for (let i = 0; i < 6; i++) { const a = rng.f() * TAU, r = 70 + rng.f() * 150; makeIsland(Z, far, Math.cos(a) * r, -10 + rng.f() * 50, 40 + Math.sin(a) * r, 5 + rng.f() * 11, rng, { col: false }); }
+  for (let i = 0; i < 12; i++) { const a = rng.f() * TAU, r = 30 + rng.f() * 80, d = far.sub({ p: [Math.cos(a) * r, rng.range(-20, 45), 35 + Math.sin(a) * r], r: [rng.range(-0.6, 0.6), rng.f() * 6, rng.range(-0.6, 0.6)], s: 1 + rng.f() * 2 }); if (Math.hypot(Math.cos(a) * r, Math.sin(a) * r) < 14) continue;
+    if (i % 4 === 0) Props.decorDoor(d, { number: '317' }); else if (i % 4 === 1) d.stairs(st, -1.5, 1.5, 0, -8, 0, 4, 9, { col: false, solid: false }); else if (i % 4 === 2) { Props.bed(d, { col: false }); } else { for (const s of [-1, 1]) d.box(st, s * 1.5 - 0.3, 0, -0.3, s * 1.5 + 0.3, 4, 0.3); d.box(st, -2, 4, -0.35, 2, 4.6, 0.35); } }
+  Props.teddy(far.sub({ p: [-70, -8, 110], ry: 2.4, s: 22 }), {}); { const d = far.sub({ p: [55, 14, 95], ry: -2.2 }); Props.text(d, 'CLOSING TIME', 12, 2.2, { tex: { color: '#ff5fb0', glow: '#ff2f90', sans: true, weight: 300, size: 150, spacing: 26, w: 1024 }, mul: 3.2, side: THREE.DoubleSide }); }
+  const moonM = new THREE.MeshBasicMaterial({ map: MOON_TEX(), color: lampOn ? hex(0xf4f0e4, 4) : hex(0x05050a, 1) }), moon = new THREE.Mesh(sph(34, 40, 28), moonM); moon.position.set(-150, 150, 210); Z.add(moon, true); const mh = makeHalo(lampOn ? 0xcfe0ff : 0x7a5aff, 190, lampOn ? 0.9 : 1.3); mh.position.copy(moon.position); Z.add(mh, true);
+  if (mem.choices.kite) { const kt = new THREE.Group(), km = new THREE.Mesh(new THREE.CircleGeometry(1, 4), Z.mat(['paper', { color: 0xe2543c, emissive: 0x551a10 }])); km.scale.set(0.75, 1.15, 1); km.rotation.z = PI / 4; kt.add(km); Z.add(kt); Z.onUpdate((dt, t) => { if (mem.choices.kite === 'free') kt.position.set(Math.cos(t * 0.12) * 26, 20 + Math.sin(t * 0.3) * 4, 30 + Math.sin(t * 0.12) * 26); else kt.position.set(8.5 + Math.sin(t * 0.6) * 0.6, SY + 7 + Math.sin(t * 0.9) * 0.5, 44 + Math.cos(t * 0.5) * 0.6); kt.rotation.y = t * 0.2; }); }
+  if (mem.choices.coin) { const fk = k.sub({ p: [6.2, SY, 44.5] }); fk.geo(lathe([[0.001, 0], [0.9, 0], [0.95, 0.06], [0.95, 0.36], [0.82, 0.42], [0.78, 0.36], [0.76, 0.12], [0.001, 0.1]], 24), ['terrazzo', { color: 0x9ab0ae, id: 'ftn' }], {}); fk.col(-0.95, 0, -0.95, 0.95, 0.42, 0.95, {}); if (mem.choices.coin === 'wish') { fk.geo(new THREE.CircleGeometry(0.77, 24), 'water', { p: [0, 0.33, 0], r: [-PI / 2, 0, 0], cast: false, keepUV: false, tile: 1 }); Z.sounds.push(Audio.emitter(Z.w(6.2, SY + 0.4, 44.5), 'water', 0.5)); } fk.geo(cyl(0.035, 0.035, 0.008, 10), 'gold', { p: [0.2, mem.choices.coin === 'wish' ? 0.2 : 0.12, 0.1], cast: false }); }
+  if (mem.choices.musicbox) Z.sounds.push(Audio.emitter(Z.w(0, SY + 2, 50), 'musicbox', 0.35));
+  // ---- guidance
+  Z.trigger(-4, 2.5, 52, 4, 8, 60, { once: true, enter: () => { if (!mem.abilities.gravity) Game.grantAbility('gravity'); UI.think('A corridor, stood on end. I know how to walk those now.'); UI.objective('The glyph on the carpet decides which way is down'); } });
+  Z.trigger(-9, SY - 0.1, 40, 9, SY + 5, 60, { once: true, enter: () => { if (P.up.y > 0.9) { UI.think('A lawn at the top of the world. And on a plinth, something very small.'); if (!mem.puzzles.finalHouse) UI.objective('Something small is waiting on the plinth'); } } });
+  D.onArrive = () => { for (const s of segs) if (mem.puzzles.finalHouse) arrive(s, true); UI.objective(null); after(1.2, () => { Audio.sfx('rumble', null, 1.6); FX.shake(0.012, 4.5); }, Z); after(6, () => { Audio.sfx('ding', D.lift.pos); D.lift.to(1); UI.think('Last floor. The one without a number.'); UI.objective('Step out'); }, Z); };
+  Z.spawn.pos.set(origin.x, origin.y + 0.02, origin.z - 1.2); Z.spawn.yaw = PI; Z.bounds = new THREE.Box3(Z.w(-90, -38, -30), Z.w(90, 110, 150));
   return Z.finalize();
 };
 
