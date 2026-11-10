@@ -1970,7 +1970,10 @@ const Game = {
     else { P.enabled = true; FX.fade(0, 2.2); Post.u.uLids.value = 0; const d = DIMS[mem.at.kind]; if (d) UI.title('Dimension ' + d.n, d.title); if (z.data.onArrive) z.data.onArrive(); }
     this.lock();
   },
-  lock() { if (this.nolock) { Input.locked = true; return; } if (document.pointerLockElement !== canvas) { const gate = () => { if (this.state === 'playing' && document.pointerLockElement !== canvas) UI.screen('clickgate'); }; try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(gate); } catch (e) { gate(); } } },
+  lock() { if (this.nolock) { Input.locked = true; return; } if (document.pointerLockElement !== canvas) { const fail = () => this.freeLook(); try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(fail); } catch (e) { fail(); } } },
+  freeLook() { // pointer lock refused (e.g. inside an embedded frame): look by moving the mouse instead
+    if (this.nolock || this.state !== 'playing') return; this.nolock = true; Input.locked = true; UI.screen(null); canvas.style.cursor = 'crosshair';
+    UI.think('Mouse capture isn’t available here, so move the mouse to look. Esc pauses.', { once: 'freelook', delay: 0.5 }); },
   pause() { if (this.state !== 'playing') return; this.state = 'paused'; this.save(false); Audio.suspend(true); $('#p-frag').textContent = this.fragCount() + ' / ' + FRAG_TOTAL; $('#p-seed').textContent = this.mem.seed; $('#p-time').textContent = fmtTime(this.time); const d = DIMS[this.mem.at.kind]; $('#p-where').textContent = d ? d.title : 'A room, at night'; UI.screen('pause'); if (document.pointerLockElement) document.exitPointerLock(); },
   resume() { if (this.state !== 'paused') return; this.state = 'playing'; Audio.suspend(false); UI.screen(null); this.lock(); },
   toMenu() {
@@ -2025,7 +2028,7 @@ click('e-again', () => { Game.begin(Game.nextMem, false); });
 click('e-menu', () => Game.toMenu());
 $('#clickgate').addEventListener('click', () => { if (Game.state === 'playing') { UI.screen(null); Game.lock(); } });
 document.addEventListener('pointerlockchange', () => { Input.locked = document.pointerLockElement === canvas; if (Input.locked && $('#clickgate').classList.contains('on')) UI.screen(null); if (!Input.locked && Game.state === 'playing' && !Game.nolock) Game.pause(); });
-document.addEventListener('pointerlockerror', () => { if (Game.state === 'playing' && !Game.nolock) UI.screen('clickgate'); });
+document.addEventListener('pointerlockerror', () => Game.freeLook());
 canvas.addEventListener('click', () => { if (Game.state === 'playing' && !Input.locked) Game.lock(); });
 document.addEventListener('mousemove', (e) => { if (Input.locked && Game.state === 'playing') { Input.dx += clamp(e.movementX || 0, -160, 160); Input.dy += clamp(e.movementY || 0, -160, 160); } });
 document.addEventListener('mousedown', (e) => { if (Game.state !== 'playing' || !Input.locked) return; Audio.init(); if (e.button === 0) Interact.ability(); });
