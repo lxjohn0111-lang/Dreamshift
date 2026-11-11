@@ -39,3 +39,14 @@ Progress, choices, fragments, the dream seed and settings are saved to `localSto
 `tests/playthrough.mjs` drives a complete run (new game → every dimension → ending → dream again, with a mid-game reload + Continue)
 in headless Chromium and fails on any broken step or console error. See the header of that file for how to run it.
 URL flags for testing: `?seed=N`, `?quality=low|medium|high|ultra`, `?debug=1`, `?nolock=1` (play without pointer lock).
+
+## CrazyGames build
+
+`crazygames/` is a ready-to-upload folder: `index.html`, a bundled copy of Three.js, bundled fonts and licence texts.
+It loads the CrazyGames HTML5 SDK v3 and saves progress and settings through the SDK **Data module**
+(falling back to `localStorage` when the SDK is not available). `crazygames-assets/` holds cover images and
+`SUBMISSION.md` (store text, SDK notes, checklist).
+
+Regenerate the folder after changing `dreamshift.html` with `python3 tools/make_crazygames.py` (see the header of that file).
+`tests/crazygames-sdk.mjs` checks the SDK integration against a mock SDK.
+On phones and tablets the game shows touch controls automatically.

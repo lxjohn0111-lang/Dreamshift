@@ -348,6 +348,7 @@ const TXT = (desk, touch) => TOUCH ? touch : desk;
    0. BOOT — load Three.js from a CDN (with fallbacks)
    ------------------------------------------------------------------------------------------ */
 const THREE_CDNS = [
+  ...(window.DREAMSHIFT_THREE ? [new URL(window.DREAMSHIFT_THREE, document.baseURI).href] : []), // portal builds ship their own copy
   'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js',
   'https://unpkg.com/three@0.170.0/build/three.module.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.min.js',
@@ -361,6 +362,25 @@ if (!THREE) {
   $('#boot-e').textContent = 'Three.js could not be loaded from the CDN. Please check your internet connection and reload the page.';
   throw _bootErr || new Error('Three.js failed to load');
 }
+
+/* ------------------------------------------------------------------------------------------
+   0b. PORTAL LAYER — CrazyGames SDK v3 (only present in the CrazyGames build; everything is optional and guarded)
+   Progress and settings go through SDK.data (cloud save for logged-in players); elsewhere localStorage is used.
+   ------------------------------------------------------------------------------------------ */
+const Portal = {
+  sdk: null, data: null, playing: false, muted: false, env: 'none',
+  async init() {
+    const cg = window.CrazyGames && window.CrazyGames.SDK; if (!cg) return;
+    try { await cg.init(); this.sdk = cg; this.env = cg.environment || 'crazygames'; } catch (e) { this.sdk = null; return; }
+    try { cg.data.getItem('dreamshift.probe'); this.data = cg.data; } catch (e) { this.data = null; }
+    try { const g = cg.game, apply = (s) => { this.muted = !!(s && s.muteAudio); try { Audio.volumes(); } catch (e) { } }; if (g && g.settings) apply(g.settings); if (g && g.addSettingsChangeListener) g.addSettingsChangeListener(apply); } catch (e) { }
+    this.call('loadingStart');
+  },
+  call(fn) { try { const g = this.sdk && this.sdk.game; if (g && typeof g[fn] === 'function') g[fn](); } catch (e) { } },
+  play(on) { if (on === this.playing) return; this.playing = on; this.call(on ? 'gameplayStart' : 'gameplayStop'); },
+  cheer() { this.call('happytime'); },
+};
+await Portal.init();
 
 /* ------------------------------------------------------------------------------------------
    1. UTILITIES
@@ -422,9 +442,9 @@ function after(sec, done, zone, tag) { return Tweens.add({ t: 0, dur: sec, fn: n
    2. SETTINGS & SAVE (localStorage)
    ------------------------------------------------------------------------------------------ */
 const Store = {
-  get(k) { try { const s = localStorage.getItem(k); return s ? JSON.parse(s) : null; } catch (e) { return null; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
-  del(k) { try { localStorage.removeItem(k); } catch (e) { } },
+  get(k) { try { const s = Portal.data ? Portal.data.getItem(k) : localStorage.getItem(k); return s ? JSON.parse(s) : null; } catch (e) { return null; } },
+  set(k, v) { try { const s = JSON.stringify(v); if (Portal.data) Portal.data.setItem(k, s); else localStorage.setItem(k, s); return true; } catch (e) { return false; } },
+  del(k) { try { if (Portal.data) Portal.data.removeItem(k); else localStorage.removeItem(k); } catch (e) { } },
 };
 const Settings = {
   KEY: 'dreamshift.settings.v1',
@@ -1643,8 +1663,8 @@ const Audio = {
     this.ready = true; this.volumes();
   },
   impulse(sec, decay) { const c = this.ctx, n = Math.floor(c.sampleRate * sec), b = c.createBuffer(2, n, c.sampleRate); for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); let lp = 0; for (let i = 0; i < n; i++) { const t = i / n; const w = (Math.random() * 2 - 1) * Math.pow(1 - t, decay) * (i < 400 ? i / 400 : 1); lp += (w - lp) * (0.9 - t * 0.7); d[i] = lp; } } return b; },
-  volumes() { if (!this.ready) return; const s = Settings.d, t = this.ctx.currentTime; this.master.gain.setTargetAtTime(s.master, t, 0.05); this.music.gain.setTargetAtTime(s.music * 1.2, t, 0.05); this.sfxBus.gain.setTargetAtTime(s.sfx, t, 0.05); },
-  suspend(on) { if (!this.ready) return; this.master.gain.setTargetAtTime(on ? Settings.d.master * 0.25 : Settings.d.master, this.ctx.currentTime, 0.2); this.lp.frequency.setTargetAtTime(on ? 700 : 19000, this.ctx.currentTime, 0.2); },
+  volumes() { if (!this.ready) return; const s = Settings.d, t = this.ctx.currentTime; this.master.gain.setTargetAtTime(Portal.muted ? 0 : s.master, t, 0.05); this.music.gain.setTargetAtTime(s.music * 1.2, t, 0.05); this.sfxBus.gain.setTargetAtTime(s.sfx, t, 0.05); },
+  suspend(on) { if (!this.ready) return; this.master.gain.setTargetAtTime(Portal.muted ? 0 : on ? Settings.d.master * 0.25 : Settings.d.master, this.ctx.currentTime, 0.2); this.lp.frequency.setTargetAtTime(on ? 700 : 19000, this.ctx.currentTime, 0.2); },
   /* --- building blocks --- */
   out(pos, rev = 1) {
     const c = this.ctx, g = c.createGain(); let last = g;
@@ -1963,6 +1983,189 @@ function makeFragment(zone, id, x, y, z, o = {}) {
 }
 
 /* ------------------------------------------------------------------------------------------
+   10b. DETAIL PASS — every prop gets a second layer of modelling (mouldings, hardware, joinery, ornament).
+   Each wrapper calls the base prop and then adds finer geometry in the same local frame.
+   ------------------------------------------------------------------------------------------ */
+const hsh = (a, b, c = 0) => hash2(Math.round(a * 31.7), Math.round(b * 17.3), c);
+{
+  const base = Object.assign({}, Props);
+  Props.doorLeaf = function (k, w, h, st = {}) {
+    base.doorLeaf(k, w, h, st); const t = 0.022, hm = st.metal || 'brass', m = st.panelMat || st.mat || 'woodDark', mg = 0.11, gap = 0.075, pw = (w - 2 * mg - gap) / 2, rows = st.rows || [[0.07, 0.4], [0.455, 0.93]], e = 0.014;
+    for (const s of [1, -1]) {
+      const z0 = s * t, z1 = s * (t + 0.014);
+      for (const [a, b] of rows) for (let c = 0; c < 2; c++) { const x0 = mg + c * (pw + gap), y0 = a * h, y1 = b * h; // bolection moulding round each panel
+        k.box(m, x0 - e, y0 - e, z0, x0 + pw + e, y0, z1); k.box(m, x0 - e, y1, z0, x0 + pw + e, y1 + e, z1); k.box(m, x0 - e, y0, z0, x0, y1, z1); k.box(m, x0 + pw, y0, z0, x0 + pw + e, y1, z1); }
+      k.geo(cyl(0.017, 0.017, 0.006, 12), hm, { p: [w - 0.085, 0.925, s * (t + 0.007)], r: [PI / 2, 0, 0] }); k.box('dark', w - 0.088, 0.912, s * (t + 0.009), w - 0.082, 0.932, s * (t + 0.0112), { cast: false }); // keyhole
+      if (st.number || st.emblem) k.box(hm, 0.04, 0.03, z0, w - 0.04, 0.19, s * (t + 0.004)); // kick plate
+    }
+    for (const y of [0.22, h / 2, h - 0.22]) { k.geo(cyl(0.011, 0.011, 0.11, 8), hm, { p: [0.002, y, -t - 0.006] }); k.geo(sph(0.012, 6, 4), hm, { p: [0.002, y + 0.06, -t - 0.006] }); k.geo(sph(0.012, 6, 4), hm, { p: [0.002, y - 0.06, -t - 0.006] }); } // hinges
+    if (st.number) { k.geo(cyl(0.017, 0.017, 0.008, 12), hm, { p: [w / 2, 1.46, t + 0.004], r: [PI / 2, 0, 0] }); k.geo(cyl(0.008, 0.008, 0.01, 10), 'blackGloss', { p: [w / 2, 1.46, t + 0.0045], r: [PI / 2, 0, 0] }); } // peephole
+  };
+  Props.doorFrame = function (k, w, h, T, mat = 'woodDark', o = {}) {
+    base.doorFrame(k, w, h, T, mat, o); const hz = T / 2, c = 0.1;
+    for (const s of (o.sides || [1, -1])) { const z0 = s * hz, z1 = s * (hz + 0.034);
+      for (const e of [-1, 1]) { const x0 = e < 0 ? -w / 2 - c - 0.008 : w / 2 - 0.008, x1 = x0 + c + 0.016, xm = (x0 + x1) / 2; // plinth blocks + corner rosettes
+        k.box(mat, x0, 0, z0, x1, 0.19, z1); k.box(mat, x0, h - 0.004, z0, x1, h + c + 0.012, z1); k.geo(cyl(0.034, 0.034, 0.01, 14), mat, { p: [xm, h + c / 2 + 0.004, s * (hz + 0.038)], r: [PI / 2, 0, 0] }); k.geo(sph(0.015, 8, 6), mat, { p: [xm, h + c / 2 + 0.004, s * (hz + 0.044)] }); }
+      k.box(mat, -w / 2, h + 0.03, z0, w / 2, h + 0.07, s * (hz + 0.028)); }
+  };
+  Props.sconce = function (k, o = {}) {
+    const v = base.sconce(k, o);
+    k.geo(cyl(0.07, 0.07, 0.012, 18), 'brass', { p: [0, 0, 0.006], r: [PI / 2, 0, 0], s: [1, 1, 1.75] }); k.geo(sph(0.022, 10, 8), 'brass', { p: [0, 0.1, 0.02] }); k.geo(sph(0.022, 10, 8), 'brass', { p: [0, -0.1, 0.02] });
+    k.geo(new THREE.TorusGeometry(0.045, 0.007, 6, 12, PI * 1.25), 'brass', { p: [0, -0.06, 0.085], r: [0, PI / 2, 0] });
+    k.geo(new THREE.TorusGeometry(0.109, 0.006, 6, 24), 'brass', { p: [0, 0.24, 0.15], r: [PI / 2, 0, 0], cast: false }); k.geo(new THREE.TorusGeometry(0.087, 0.006, 6, 24), 'brass', { p: [0, 0.083, 0.15], r: [PI / 2, 0, 0], cast: false });
+    k.geo(cyl(0.032, 0.02, 0.022, 12), 'brass', { p: [0, 0.046, 0.15] }); k.geo(sph(0.017, 8, 6), 'brass', { p: [0, 0.022, 0.15] });
+    return v;
+  };
+  Props.chandelier = function (k, o = {}) {
+    const v = base.chandelier(k, o), R = o.r || 1.1, n = o.n || 10, drop = o.drop || 1.6, gl = ['glass', { opacity: 0.55, color: 0xfff6e6 }];
+    k.geo(lathe([[0.001, 0], [0.24, 0], [0.26, -0.03], [0.13, -0.06], [0.07, -0.12], [0.03, -0.15]], 20), 'brass', {});
+    for (let i = 0; i < 8; i++) k.geo(new THREE.TorusGeometry(0.03, 0.007, 5, 10), 'brass', { p: [0, -0.2 - i * 0.056, 0], r: [0, i % 2 ? PI / 2 : 0, 0], s: [1, 1.4, 1], cast: false });
+    for (let ring = 0; ring < (o.tiers || 2); ring++) { const rr = R * (1 - ring * 0.42), y = -drop + ring * 0.42, nn = Math.max(5, Math.round(n * (1 - ring * 0.35)));
+      for (let i = 0; i < nn; i++) { const a = i / nn * TAU + ring * 0.3, x = Math.cos(a) * rr, z = Math.sin(a) * rr, a2 = a + PI / nn, x2 = Math.cos(a2) * rr, z2 = Math.sin(a2) * rr;
+        k.geo(cyl(0.046, 0.03, 0.012, 10), 'brass', { p: [x, y + 0.046, z] }); for (let j = 0; j < 3; j++) k.geo(new THREE.OctahedronGeometry(0.023 - j * 0.004), gl, { p: [x2, y - 0.06 - j * 0.062, z2], s: [1, 1.8, 1], cast: false }); } }
+    k.geo(sph(0.045, 10, 8), 'brass', { p: [0, -drop - 0.37, 0] }); k.geo(new THREE.OctahedronGeometry(0.09), gl, { p: [0, -drop - 0.5, 0], s: [1, 1.7, 1], cast: false });
+    return v;
+  };
+  Props.pendant = function (k, len = 1, o = {}) { const v = base.pendant(k, len, o); k.geo(lathe([[0.001, 0], [0.09, 0], [0.1, -0.015], [0.04, -0.04], [0.012, -0.06]], 14), 'brass', {}); k.geo(new THREE.TorusGeometry(0.205, 0.008, 6, 24), 'brass', { p: [0, -len - 0.168, 0], r: [PI / 2, 0, 0] }); k.geo(cyl(0.022, 0.03, 0.06, 10), 'brass', { p: [0, -len + 0.02, 0] }); return v; };
+  Props.tableLamp = function (k, o = {}) { const v = base.tableLamp(k, o); k.geo(new THREE.TorusGeometry(0.168, 0.005, 5, 24), 'brass', { p: [0, 0.362, 0], r: [PI / 2, 0, 0], cast: false }); k.geo(new THREE.TorusGeometry(0.114, 0.005, 5, 24), 'brass', { p: [0, 0.578, 0], r: [PI / 2, 0, 0], cast: false }); k.geo(sph(0.014, 8, 6), 'brass', { p: [0, 0.6, 0] }); k.geo(cyl(0.004, 0.004, 0.07, 5), 'brass', { p: [0.035, 0.34, 0.02] }); k.geo(sph(0.008, 6, 4), 'brass', { p: [0.035, 0.3, 0.02] }); return v; };
+  Props.bed = function (k, o = {}) {
+    base.bed(k, o); const w = o.w || 1.5, L = 2.05, wood = o.wood || 'woodDark', acc = o.throwMat || ['fabric', { color: 0xb5553c }], linen = o.linen || ['fabric', { color: 0xe9e2d4 }];
+    for (const s of [-1, 1]) { // turned posts with finials
+      k.geo(lathe([[0.045, 0], [0.045, 1.1], [0.058, 1.13], [0.03, 1.17], [0.05, 1.23], [0.03, 1.29], [0.001, 1.32]], 12), wood, { p: [s * (w / 2 + 0.015), 0, -L / 2 - 0.03] });
+      k.geo(lathe([[0.04, 0], [0.04, 0.5], [0.05, 0.53], [0.028, 0.56], [0.045, 0.61], [0.001, 0.66]], 12), wood, { p: [s * (w / 2 + 0.005), 0, L / 2 + 0.02] });
+      k.box(wood, s * w / 2 - (s > 0 ? 0.03 : 0), 0.3, -L / 2 + 0.05, s * w / 2 + (s < 0 ? 0.03 : 0), 0.36, L / 2 - 0.02); } // side rails
+    k.geo(rboxGeo(w * 0.72, 0.13, 0.05, 0.02, 2), wood, { p: [0, 1.2, -L / 2 - 0.03] }); k.geo(cyl(0.085, 0.085, 0.03, 18), wood, { p: [0, 1.22, -L / 2 - 0.012], r: [PI / 2, 0, 0] }); k.geo(sph(0.03, 10, 8), wood, { p: [0, 1.22, -L / 2 + 0.008] });
+    for (let i = 0; i < 5; i++) { const x = (i - 2) * (w - 0.3) / 5; k.box(wood, x - 0.035, 0.52, -L / 2 + 0.02, x + 0.035, 0.98, -L / 2 + 0.032); } // headboard slats
+    k.box(wood, -w / 2 - 0.03, 0.5, L / 2 - 0.005, w / 2 + 0.03, 0.55, L / 2 + 0.05); for (let i = 0; i < 4; i++) { const x = (i - 1.5) * (w - 0.2) / 4; k.box(wood, x - 0.03, 0.08, L / 2 + 0.04, x + 0.03, 0.46, L / 2 + 0.05); }
+    const cz = L * 0.17 - 0.02; for (const dz of [-0.42, -0.12, 0.18]) k.box(acc, -w / 2 - 0.045, 0.6405, cz + dz - 0.006, w / 2 + 0.045, 0.6445, cz + dz + 0.006, { cast: false }); // quilting
+    for (const dx of [-0.3, 0, 0.3]) k.box(acc, dx * w - 0.006, 0.6405, cz - L * 0.31, dx * w + 0.006, 0.6445, L / 2 - 0.62, { cast: false });
+    k.geo(rboxGeo(0.36, 0.3, 0.13, 0.055, 4), acc, { p: [w > 1.2 ? 0 : 0.12, 0.74, -L / 2 + 0.6], r: [0.5, 0.25, 0.1] }); // accent cushion
+    k.geo(rboxGeo(w - 0.02, 0.04, L - 0.04, 0.018, 2), linen, { p: [0, 0.335, 0] }); // mattress piping / base sheet
+  };
+  Props.nightstand = function (k, o = {}) {
+    base.nightstand(k, o); const wood = o.wood || 'woodDark';
+    k.box(wood, -0.26, 0.59, -0.215, 0.26, 0.655, -0.195); for (const s of [-1, 1]) { k.box(wood, s * 0.26 - (s > 0 ? 0.012 : 0), 0.59, -0.215, s * 0.26 + (s < 0 ? 0.012 : 0), 0.625, -0.02); k.box(wood, s * 0.25, 0.2, -0.14, s * 0.257, 0.5, 0.14); }
+    k.box(wood, -0.24, 0.1, -0.19, 0.24, 0.14, 0.19); k.box(wood, -0.285, 0.565, -0.235, 0.285, 0.578, 0.235);
+    for (const [x, z] of [[-0.2, -0.16], [0.2, -0.16], [-0.2, 0.16], [0.2, 0.16]]) k.geo(sph(0.032, 8, 6), wood, { p: [x, 0.03, z] });
+    for (const y of [0.27, 0.445]) k.geo(new THREE.TorusGeometry(0.03, 0.005, 5, 12, PI), 'brass', { p: [0, y - 0.005, 0.228], r: [PI, 0, 0] });
+  };
+  Props.wardrobe = function (k, o = {}) {
+    base.wardrobe(k, o); const wood = o.wood || 'woodDark', w = o.w || 1.5, h = o.h || 2.15, d = 0.6;
+    k.box(wood, -w / 2 - 0.07, h + 0.07, -d / 2 - 0.04, w / 2 + 0.07, h + 0.1, d / 2 + 0.06); k.box(wood, -w / 2 - 0.02, h - 0.04, d / 2 - 0.02, w / 2 + 0.02, h, d / 2 + 0.02);
+    for (const s of [-1, 1]) { k.box(wood, s * (w / 2 - 0.035) - 0.035, 0.11, d / 2, s * (w / 2 - 0.035) + 0.035, h - 0.04, d / 2 + 0.022); k.geo(sph(0.05, 10, 8), wood, { p: [s * (w / 2 - 0.08), 0.035, d / 2 - 0.1], s: [1, 0.8, 1] }); k.geo(sph(0.05, 10, 8), wood, { p: [s * (w / 2 - 0.08), 0.035, -d / 2 + 0.1], s: [1, 0.8, 1] });
+      k.geo(cyl(0.014, 0.014, 0.005, 10), 'brass', { p: [s * 0.05, 0.93, d / 2 + 0.003], r: [PI / 2, 0, 0] }); const x0 = s < 0 ? -w / 2 + 0.1 : 0.088, x1 = s < 0 ? -0.088 : w / 2 - 0.1;
+      for (const [ya, yb] of [[0.2, 0.85], [0.95, h - 0.12]]) { k.box(wood, x0 + 0.035, ya + 0.035, d / 2 + 0.012, x1 - 0.035, yb - 0.035, d / 2 + 0.02); } }
+    k.geo(lathe([[0.001, 0], [0.06, 0], [0.07, 0.03], [0.03, 0.06], [0.05, 0.12], [0.02, 0.17], [0.001, 0.19]], 12), wood, { p: [0, h + 0.1, d / 2 - 0.08] }); k.box(wood, -w / 2 + 0.02, 0.085, d / 2 - 0.03, w / 2 - 0.02, 0.11, d / 2 + 0.01);
+  };
+  Props.desk = function (k, o = {}) {
+    base.desk(k, o); const wood = o.wood || 'wood', w = o.w || 1.3, d = 0.62;
+    k.box(wood, -w / 2 + 0.04, 0.14, -d / 2 + 0.06, -w / 2 + 0.07, 0.18, d / 2 - 0.06); k.box(wood, -w / 2 - 0.012, 0.745, -d / 2 - 0.012, w / 2 + 0.012, 0.756, d / 2 + 0.012); k.box(wood, -w / 2 + 0.06, 0.3, -d / 2 + 0.035, w / 2 - 0.42, 0.62, -d / 2 + 0.047);
+    for (let i = 0; i < 3; i++) k.box(wood, w / 2 - 0.385, 0.115 + i * 0.205, d / 2 - 0.015, w / 2 - 0.055, 0.265 + i * 0.205, d / 2 - 0.009);
+    if (o.dress !== false) { // things left on a desk
+      k.geo(cyl(0.038, 0.032, 0.095, 12, true), ['ceramic', { color: 0x3f5a6a, side: THREE.DoubleSide, id: 'cup' }], { p: [-0.12, 0.807, -0.17] }); k.geo(cyl(0.032, 0.032, 0.004, 12), ['ceramic', { color: 0x3f5a6a, id: 'cupb' }], { p: [-0.12, 0.762, -0.17] });
+      for (let i = 0; i < 3; i++) { const c = [0xe8b53a, 0xd94a3d, 0x3d7fd9][i]; k.geo(cyl(0.004, 0.004, 0.15, 6), ['matte', { color: c, id: 'pn' + i }], { p: [-0.12 + (i - 1) * 0.012, 0.85, -0.17 + (i % 2) * 0.01], r: [(i - 1) * 0.16, 0, (i - 1) * 0.2] }); }
+      k.geo(new THREE.BoxGeometry(0.2, 0.012, 0.27), ['paper', { color: 0x2f4a5c, id: 'nb' }], { p: [0.02, 0.767, 0.08], ry: 0.25 }); k.geo(new THREE.BoxGeometry(0.19, 0.004, 0.26), ['paper', { color: 0xf3ead8 }], { p: [0.03, 0.775, 0.085], ry: 0.32 });
+      k.geo(cyl(0.004, 0.004, 0.14, 6), ['matte', { color: 0x222226, id: 'pen' }], { p: [0.1, 0.78, 0.06], r: [PI / 2, 0.9, 0] });
+      k.geo(new THREE.BoxGeometry(0.13, 0.16, 0.012), 'woodDark', { p: [-0.34, 0.835, -0.2], r: [-0.22, 0.3, 0] }); k.geo(new THREE.BoxGeometry(0.1, 0.13, 0.002), ['paper', { color: 0xc9d4e0, id: 'ph' }], { p: [-0.337, 0.836, -0.192], r: [-0.22, 0.3, 0] });
+    }
+  };
+  Props.chair = function (k, o = {}) {
+    base.chair(k, o); const wood = o.wood || 'wood';
+    k.box(wood, -0.19, 0.17, -0.19, -0.17, 0.2, 0.19); k.box(wood, 0.17, 0.17, -0.19, 0.19, 0.2, 0.19); k.box(wood, -0.19, 0.24, 0.17, 0.19, 0.27, 0.19); k.box(wood, -0.19, 0.24, -0.19, 0.19, 0.27, -0.17);
+    k.box(wood, -0.2, 0.395, 0.17, 0.2, 0.44, 0.2); k.geo(rboxGeo(0.47, 0.075, 0.04, 0.018, 2), wood, { p: [0, 0.975, -0.186] }); k.box(wood, -0.2, 0.62, -0.195, 0.2, 0.65, -0.172);
+    for (const s of [-1, 1]) k.geo(sph(0.026, 8, 6), wood, { p: [s * 0.18, 0.965, -0.18] });
+  };
+  Props.armchair = function (k, o = {}) {
+    base.armchair(k, o); const f = o.fabric || ['velvet', {}], w = o.w || 0.86, dk = ['velvet', { color: 0x241216, id: 'btn' }];
+    for (const s of [-1, 1]) { const ax = s * (w / 2 - 0.08); k.geo(cyl(0.088, 0.088, 0.72, 14), f, { p: [ax, 0.665, 0.0], r: [PI / 2, 0, 0] }); k.geo(cyl(0.092, 0.092, 0.03, 16), f, { p: [ax, 0.665, 0.37], r: [PI / 2, 0, 0] }); k.geo(sph(0.022, 8, 6), dk, { p: [ax, 0.665, 0.39] }); k.geo(cyl(0.014, 0.014, 0.012, 8), 'brass', { p: [ax + s * 0.02, 0.012, 0.32] }); }
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) k.geo(sph(0.016, 8, 6), dk, { p: [(c - 1) * 0.19, 0.62 + r * 0.2, -0.232 - r * 0.024], s: [1, 1, 0.5] });
+    k.geo(rboxGeo(0.34, 0.3, 0.11, 0.05, 4), o.cushion || ['fabric', { color: 0xd9c9a8, id: 'cush' }], { p: [0.06, 0.66, -0.13], r: [-0.35, 0.2, 0.12] }); k.geo(rboxGeo(w - 0.02, 0.05, 0.84, 0.02, 2), f, { p: [0, 0.165, 0] });
+  };
+  Props.console = function (k, o = {}) {
+    base.console(k, o); const wood = o.wood || 'woodDark', w = o.w || 1.2, d = 0.36;
+    k.box(wood, -w / 2 + 0.08, 0.715, d / 2 - 0.03, w / 2 - 0.08, 0.785, d / 2 - 0.022); k.geo(cyl(0.05, 0.05, 0.012, 14), wood, { p: [0, 0.75, d / 2 - 0.022], r: [PI / 2, 0, 0], s: [1.6, 1, 1] }); for (const s of [-1, 1]) k.geo(new THREE.TorusGeometry(0.026, 0.005, 5, 12, PI), 'brass', { p: [s * w * 0.28, 0.745, d / 2 - 0.016], r: [PI, 0, 0] });
+    k.box(o.top || 'marble', -w / 2 - 0.012, 0.826, -d / 2 - 0.012, w / 2 + 0.012, 0.834, d / 2 + 0.012); k.geo(sph(0.03, 8, 6), wood, { p: [0, 0.2, 0], s: [1, 0.6, 1] });
+  };
+  Props.picture = function (k, w, h, tex, o = {}) {
+    const m = base.picture(k, w, h, tex, o), fr = o.frame || 'gold', b = o.b || 0.045, inn = fr === 'gold' ? 'woodDark' : 'gold', e = Math.min(0.014, b * 0.3);
+    k.box(inn, -w / 2, -h / 2, 0.04, w / 2, -h / 2 + e, 0.047, { cast: false }); k.box(inn, -w / 2, h / 2 - e, 0.04, w / 2, h / 2, 0.047, { cast: false }); k.box(inn, -w / 2, -h / 2, 0.04, -w / 2 + e, h / 2, 0.047, { cast: false }); k.box(inn, w / 2 - e, -h / 2, 0.04, w / 2, h / 2, 0.047, { cast: false });
+    for (const sx of [-1, 1]) for (const sy of [-1, 1]) k.geo(sph(b * 0.36, 6, 5), fr, { p: [sx * (w / 2 + b / 2), sy * (h / 2 + b / 2), 0.04], s: [1, 1, 0.5] });
+    if (w > 0.45) k.box('brass', -0.07, -h / 2 - b - 0.05, 0, 0.07, -h / 2 - b - 0.018, 0.01);
+    return m;
+  };
+  Props.plant = function (k, o = {}) {
+    base.plant(k, o); const h = o.h || 1.5, s = o.ps || 1, pot = o.pot || ['ceramic', { color: 0xd8d2c4 }];
+    if (s > 0.1) { k.geo(cyl(0.2, 0.17, 0.025, 16), pot, { p: [0, 0.012 * s, 0], s }); k.geo(new THREE.TorusGeometry(0.212, 0.016, 6, 20), pot, { p: [0, 0.338 * s, 0], r: [PI / 2, 0, 0], s }); k.geo(cyl(0.185, 0.185, 0.01, 16), ['matte', { color: 0x2a2018, id: 'soil' }], { p: [0, 0.305 * s, 0], s, cast: false }); }
+    const n = 6; for (let i = 0; i < n; i++) { const a = i / n * TAU + 0.5, len = h * 0.34, g = new THREE.PlaneGeometry(len * 0.24, len, 1, 6), p = g.attributes.position;
+      for (let j = 0; j < p.count; j++) { const y = p.getY(j) / len + 0.5, x = p.getX(j); p.setXYZ(j, x * (1 - Math.pow(Math.abs(y - 0.45) * 1.9, 2)) * 1.4, y * len * Math.cos(y * 1.0), -Math.sin(y * 1.3) * len * 0.45 * y + Math.abs(x) * 0.3); }
+      g.computeVertexNormals(); k.geo(g, ['leaf', { color: 0x5f9a5c, id: 'leaf2' }], { p: [0, 0.3 + h * 0.5, 0], r: [0.22 + (i % 2) * 0.16, a, 0], keepUV: true }); }
+  };
+  Props.cardboard = function (k, w, h, d, o = {}) {
+    base.cardboard(k, w, h, d, o); const tape = ['paper', { color: 0xc8b48a }];
+    for (const s of [-1, 1]) { k.box('dark', s * w / 2 - (s > 0 ? 0 : 0.003), h * 0.7, -0.05, s * w / 2 + (s > 0 ? 0.003 : 0), h * 0.77, 0.05, { cast: false }); k.box(tape, s * w / 2 - (s > 0 ? 0 : 0.002), h * 0.55, -0.03, s * w / 2 + (s > 0 ? 0.002 : 0), h, 0.03, { cast: false }); }
+    k.box('cardboard', -w / 2 - 0.004, h - 0.012, -d / 2 - 0.004, w / 2 + 0.004, h - 0.004, d / 2 + 0.004); k.box(tape, -0.03, 0, -d / 2 - 0.002, 0.03, h * 0.2, -d / 2, { cast: false });
+  };
+  Props.window = function (k, w, h, o = {}) {
+    base.window(k, w, h, o); const fm = o.frame || 'paintWhite', d = 0.05;
+    for (const s of [-1, 1]) k.box(fm, s * w * 0.36 - 0.03, -0.2, d, s * w * 0.36 + 0.03, -0.08, d + 0.06); k.box(fm, -w / 2 - 0.085, h + 0.06, -d, w / 2 + 0.085, h + 0.095, d + 0.03);
+    k.box('brass', -0.012, h / 2 - 0.05, 0.02, 0.012, h / 2 + 0.05, 0.034); k.geo(cyl(0.007, 0.007, 0.07, 6), 'brass', { p: [0.03, h / 2, 0.04], r: [0, 0, PI / 2] });
+    k.box(fm, -w / 2, 0, -0.012, w / 2, 0.03, 0.03); k.box(fm, -w / 2, h - 0.03, -0.012, w / 2, h, 0.03); for (const s of [-1, 1]) k.box(fm, s * w / 2 - (s > 0 ? 0.03 : 0), 0, -0.012, s * w / 2 + (s < 0 ? 0.03 : 0), h, 0.03);
+  };
+  Props.column = function (k, r, h, mat = 'marble', o = {}) { // fluted shaft, attic base, capital with abacus
+    const seg = 40, prof = [[r, h * 0.085], [r * 0.99, h * 0.25], [r * 0.95, h * 0.55], [r * 0.87, h * 0.895]], g = lathe(prof, seg), p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) { const colI = Math.floor(i / prof.length); if (colI % 2 === 1) { p.setX(i, p.getX(i) * 0.95); p.setZ(i, p.getZ(i) * 0.95); } } g.computeVertexNormals();
+    k.geo(g, mat, { keepUV: true, uvs: [3, h / 2.2] });
+    k.geo(lathe([[r * 1.42, h * 0.014], [r * 1.42, h * 0.024], [r * 1.3, h * 0.03], [r * 1.36, h * 0.042], [r * 1.2, h * 0.054], [r * 1.1, h * 0.064], [r * 1.16, h * 0.075], [r, h * 0.085]], 28), mat, { keepUV: true, uvs: [3, 0.3] });
+    k.box(mat, -r * 1.5, 0, -r * 1.5, r * 1.5, h * 0.014, r * 1.5);
+    k.geo(lathe([[r * 0.87, h * 0.895], [r * 0.96, h * 0.903], [r * 0.88, h * 0.912], [r * 0.9, h * 0.928], [r * 1.22, h * 0.958], [r * 1.3, h * 0.97]], 28), mat, { keepUV: true, uvs: [3, 0.3] });
+    k.box(mat, -r * 1.42, h * 0.97, -r * 1.42, r * 1.42, h, r * 1.42); for (const sx of [-1, 1]) for (const sz of [-1, 1]) k.geo(sph(r * 0.2, 8, 6), mat, { p: [sx * r * 1.22, h * 0.955, sz * r * 1.22] });
+    k.geo(new THREE.TorusGeometry(r * 0.9, r * 0.045, 6, 28), mat, { p: [0, h * 0.89, 0], r: [PI / 2, 0, 0] });
+    if (o.col !== false) k.col(-r * 1.2, 0, -r * 1.2, r * 1.2, h, r * 1.2, { surf: 'marble' });
+  };
+  Props.bench = function (k, o = {}) {
+    base.bench(k, o); const w = o.w || 1.8, leg = o.leg || 'steel';
+    k.box(leg, -w / 2 + 0.2, 0.13, -0.02, w / 2 - 0.2, 0.17, 0.02); for (const z of [-0.115, 0, 0.115]) k.box('dark', -w / 2 + 0.01, 0.4755, z - 0.004, w / 2 - 0.01, 0.477, z + 0.004, { cast: false });
+    for (const s of [-1, 1]) { k.box(leg, s * (w / 2 - 0.2) - 0.05, 0, -0.23, s * (w / 2 - 0.2) + 0.05, 0.02, 0.23); k.geo(sph(0.02, 6, 5), leg, { p: [s * (w / 2 - 0.03), 0.44, 0.2] }); k.geo(sph(0.02, 6, 5), leg, { p: [s * (w / 2 - 0.03), 0.44, -0.2] }); }
+  };
+  Props.mannequin = function (k, o = {}) {
+    base.mannequin(k, o); const m = o.mat || ['ceramic', { color: 0xe9e4da, roughness: 0.45 }];
+    for (const s of [-1, 1]) { k.geo(sph(0.058, 10, 8), m, { p: [s * 0.172, 1.42, 0] }); k.geo(sph(0.036, 8, 6), m, { p: [s * 0.215, 1.13, 0] }); k.geo(sph(0.04, 8, 6), m, { p: [s * 0.232, 0.84, 0.01], s: [0.7, 1.3, 1] }); k.geo(rboxGeo(0.085, 0.055, 0.22, 0.025, 2), m, { p: [s * 0.075, 0.03, 0.045] }); k.geo(sph(0.05, 8, 6), m, { p: [s * 0.075, 0.5, 0.004] }); }
+    k.geo(new THREE.TorusGeometry(0.046, 0.006, 5, 14), 'chrome', { p: [0, 1.555, 0], r: [PI / 2, 0, 0] }); k.geo(new THREE.TorusGeometry(0.128, 0.005, 5, 20), 'chrome', { p: [0, 0.9, 0], r: [PI / 2, 0, 0], s: [1, 0.7, 1] }); k.geo(sph(0.022, 8, 6), 'chrome', { p: [0, 0.9, 0.03] });
+  };
+  Props.teddy = function (k, o = {}) {
+    base.teddy(k, o); const f2 = o.fur2 || ['fur', { color: 0xdcc09a, id: 'fur2' }], f = o.fur || ['fur', {}], red = ['fabric', { color: 0xb5332c, id: 'bow' }];
+    for (const s of [-1, 1]) { k.geo(new THREE.ConeGeometry(0.1, 0.22, 8), red, { p: [s * 0.13, 0.93, 0.37], r: [0, 0, s * PI / 2] }); k.geo(sph(0.075, 10, 8), f2, { p: [s * 0.63, 0.6, 0.27], s: [1, 1, 0.5], keepUV: true }); }
+    k.geo(sph(0.05, 8, 6), red, { p: [0, 0.93, 0.38] }); k.geo(sph(0.26, 14, 10), f2, { p: [0, 0.5, 0.3], s: [1, 1.1, 0.5], keepUV: true }); k.geo(sph(0.11, 10, 8), f, { p: [0, 0.22, -0.46], keepUV: true });
+    k.box('blackGloss', -0.005, 1.08, 0.435, 0.005, 1.17, 0.462); k.geo(new THREE.TorusGeometry(0.05, 0.006, 5, 10, PI), 'blackGloss', { p: [0, 1.085, 0.44], r: [PI + 0.25, 0, 0] });
+    for (let i = 0; i < 6; i++) k.box('blackGloss', -0.004, 0.3 + i * 0.07, 0.455 - Math.abs(i - 2.5) * 0.012, 0.004, 0.33 + i * 0.07, 0.468 - Math.abs(i - 2.5) * 0.012, { cast: false });
+  };
+  Props.key = function (k, o = {}) { base.key(k, o); const m = o.mat || 'gold'; for (const x of [-0.16, -0.1, 0.24]) k.geo(new THREE.TorusGeometry(0.052, 0.014, 6, 12), m, { p: [x, 0, 0], r: [0, PI / 2, 0] }); for (let i = 0; i < 3; i++) { const a = PI / 2 + i * TAU / 3; k.geo(sph(0.05, 8, 6), m, { p: [-0.42 + Math.cos(a) * 0.2, Math.sin(a) * 0.2, 0], s: [1, 1, 0.6] }); } k.box(m, 0.33, -0.12, -0.025, 0.4, -0.06, 0.025); };
+}
+/* trees: roots, extra limbs, a fuller crown */
+{
+  const baseTree = makeTree, baseIsland = makeIsland, basePortal = stonePortal;
+  makeTree = function (k, x, y, z, s, rng, leafCols = [0x6f9a4c, 0x86ad55, 0x5d8a46]) {
+    baseTree(k, x, y, z, s, rng, leafCols); const bark = ['wood', { color: 0x6a5240 }];
+    for (let i = 0; i < 5; i++) { const a = i * 1.26 + hsh(x, z, i) * 0.6; k.geo(new THREE.IcosahedronGeometry(0.2 * s, 1), bark, { p: [x + Math.cos(a) * 0.27 * s, y + 0.05 * s, z + Math.sin(a) * 0.27 * s], ry: -a, s: [1.7, 0.5, 0.7], keepUV: false }); }
+    for (let i = 0; i < 3; i++) { const a = i * 2.1 + hsh(x, z, 7 + i) * 2, len = (0.9 + hsh(x, z, 11 + i) * 0.5) * s; k.geo(cyl(0.035 * s, 0.065 * s, len, 6), bark, { p: [x + Math.cos(a) * 0.33 * s, y + (2.25 + i * 0.22) * s, z + Math.sin(a) * 0.33 * s], r: [0, -a, -0.85] }); }
+    k.geo(new THREE.IcosahedronGeometry(0.11 * s, 1), bark, { p: [x + 0.13 * s, y + 1.25 * s, z + 0.06 * s], s: [1, 1.3, 0.8], keepUV: false });
+    for (let i = 0; i < 8; i++) { const a = i * 0.785 + hsh(x, z, 20 + i), r = (1.35 + hsh(x, z, 30 + i) * 0.55) * s, rr = (0.5 + hsh(x, z, 40 + i) * 0.4) * s, c = leafCols[(i + 1) % leafCols.length];
+      k.geo(new THREE.IcosahedronGeometry(rr, 2), ['matte', { color: c, id: 'lf' + c }], { p: [x + Math.cos(a) * r, y + (2.7 + hsh(x, z, 50 + i) * 1.3) * s, z + Math.sin(a) * r], s: [1, 0.8, 1], keepUV: true }); }
+  };
+  makeIsland = function (Z, k, cx, cy, cz, R, rng, o = {}) { // hanging rock teeth under every island
+    const isl = baseIsland(Z, k, cx, cy, cz, R, rng, o), rock = o.rock || 'rock', n = Math.round(7 + R * 0.9);
+    for (let i = 0; i < n; i++) { const a = hsh(cx, cz, i) * TAU, f = 0.12 + hsh(cx, cz, 60 + i) * 0.62, len = R * (0.22 + hsh(cx, cz, 90 + i) * 0.5), yu = cy - R * 1.15 * (1 - f) * 0.86 - len * 0.22;
+      k.geo(new THREE.ConeGeometry(len * 0.26, len, 6), rock, { p: [cx + Math.cos(a) * f * R, yu, cz + Math.sin(a) * f * R], r: [PI + (hsh(cx, cz, 120 + i) - 0.5) * 0.3, a, (hsh(cx, cz, 150 + i) - 0.5) * 0.3], keepUV: false }); }
+    return isl;
+  };
+  stonePortal = function (k, o = {}) { // dentils, acroterion, worn steps
+    basePortal(k, o); const m = o.mat || 'stone';
+    for (let i = -5; i <= 5; i++) { if (Math.abs(i) < 2) continue; k.box(m, i * 0.2 - 0.055, 2.5, 0, i * 0.2 + 0.055, 2.6, 0.045); k.box(m, i * 0.2 - 0.055, 2.5, -0.495, i * 0.2 + 0.055, 2.6, -0.45); }
+    k.geo(sph(0.15, 12, 10), m, { p: [0, 3.2, -0.225], keepUV: false }); k.box(m, -0.2, 3.05, -0.36, 0.2, 3.1, -0.09); for (const s of [-1, 1]) { k.geo(new THREE.ConeGeometry(0.11, 0.3, 4), m, { p: [s * 1.02, 2.95, -0.225], ry: PI / 4, keepUV: false }); k.box(m, s * 0.5, 0.22, -0.47, s * 0.58, 2.0, -0.45); k.box(m, s * 0.97, 0.22, -0.47, s * 1.05, 2.0, -0.45); }
+  };
+}
+
+/* ------------------------------------------------------------------------------------------
    11. DREAM MEMORY, PROCEDURAL DIRECTOR, UI, GAME FLOW
    ------------------------------------------------------------------------------------------ */
 const DIMS = {
@@ -2027,7 +2230,7 @@ const Game = {
   grantAbility(name) { const m = this.mem; if (m.abilities[name]) return; m.abilities[name] = true; m.ability = name; UI.ability(); },
   selectAbility(name) { const m = this.mem; if (!m.abilities[name] || m.ability === name) return; m.ability = name; UI.ability(); Audio.sfx('ui', null, name === 'grasp' ? 1 : 0.75); },
   toggleAbility() { const m = this.mem; if (m.abilities.grasp && m.abilities.gravity) this.selectAbility(m.ability === 'grasp' ? 'gravity' : 'grasp'); },
-  collectFragment(id, pos) { const m = this.mem; if (m.frags[id]) return; m.frags[id] = true; Audio.sfx('fragment'); FX.flash(0.3); Atmo.hazeKick = 0.4; UI.frag(true); UI.think(FRAG_LINES[id], { memory: true, clear: true }); this.save(true); this.onEvent('fragment', id); },
+  collectFragment(id, pos) { const m = this.mem; if (m.frags[id]) return; m.frags[id] = true; Portal.cheer(); Audio.sfx('fragment'); FX.flash(0.3); Atmo.hazeKick = 0.4; UI.frag(true); UI.think(FRAG_LINES[id], { memory: true, clear: true }); this.save(true); this.onEvent('fragment', id); },
   fragCount() { return Object.keys(this.mem.frags).length; },
   onEvent(type, a, b) { for (const z of World.zones) if (z.data.onEvent) z.data.onEvent(type, a, b); },
   save(show) { if (!this.mem || this.state === 'menu' || this.noSave) return; this.mem.playTime = Math.round(this.time); if (SaveGame.write(this.mem) && show) UI.saved(); },
@@ -2069,7 +2272,7 @@ const Game = {
     this.mem = this.newMem(7, 0); P.cine = { menu: true }; this.buildAt({ kind: 'intro', visit: 0 }); refreshMenu(); UI.screen('menu'); if (document.pointerLockElement) document.exitPointerLock();
   },
   ending(kind) {
-    const m = this.mem; this.state = 'ending'; P.enabled = false; m.legacy.endings.push(kind); m.legacy.best = Math.max(m.legacy.best, this.fragCount()); const n = this.fragCount();
+    const m = this.mem; this.state = 'ending'; P.enabled = false; Portal.cheer(); m.legacy.endings.push(kind); m.legacy.best = Math.max(m.legacy.best, this.fragCount()); const n = this.fragCount();
     const E = { wake: ['You woke', 'Ending — Morning'], drift: ['You stayed', 'Ending — Between'], lucid: ['You remembered', 'Ending — Lucid'] }[kind];
     $('#e-kind').textContent = E[1]; $('#e-title').textContent = E[0]; $('#e-frag').textContent = n + ' / ' + FRAG_TOTAL; $('#e-seed').textContent = m.seed; $('#e-time').textContent = fmtTime(this.time);
     const c = m.choices, lines = [];
@@ -2169,7 +2372,7 @@ function tick(dt) {
 let _last = performance.now(), _fps = 60, _dbgT = 0;
 function renderFrame() { camera.updateMatrixWorld(); Post.render(World.time); }
 function frame(now) {
-  requestAnimationFrame(frame); const raw = (now - _last) / 1000; _last = now; if (typeof Touch !== 'undefined') Touch.update(); if (Game.manual) return;
+  requestAnimationFrame(frame); const raw = (now - _last) / 1000; _last = now; if (typeof Touch !== 'undefined') Touch.update(); Portal.play(Game.state === 'playing'); if (Game.manual) return;
   const dt = Math.min(0.05, Math.max(0.0005, raw));
   if (Game.state !== 'paused') tick(dt); renderFrame();
   _fps = lerp(_fps, 1 / Math.max(raw, 1e-4), 0.05); if (Game.state === 'playing' && document.hasFocus()) Post.adapt(raw * 1000);
@@ -3186,7 +3389,7 @@ window.__T = Touch;
    99. BOOT + QA HOOKS
    ------------------------------------------------------------------------------------------ */
 window.__DS = {
-  THREE, Game, P, World, Dream, UI, Post, Atmo, Grasp, Gravity, Interact, Audio, Settings, SaveGame, Input, Lights, camera, scene, renderer, ZONES, Tweens,
+  Portal, THREE, Game, P, World, Dream, UI, Post, Atmo, Grasp, Gravity, Interact, Audio, Settings, SaveGame, Input, Lights, camera, scene, renderer, ZONES, Tweens,
   manual(on) { Game.manual = on; }, step(dt = 1 / 60, n = 1) { for (let i = 0; i < n; i++) tick(dt); }, render() { renderFrame(); },
   tp(x, y, z, yaw, pitch) { P.pos.set(x, y, z); P.vel.set(0, 0, 0); if (yaw !== undefined) P.yaw = yaw; if (pitch !== undefined) P.pitch = pitch; },
   lookAt(x, y, z) { const eye = P.center(v3()).addScaledVector(P.up, P.eyeH - P.height / 2), d = v3(x, y, z).sub(eye).normalize().applyQuaternion(P.frame.clone().invert()); P.yaw = Math.atan2(-d.x, -d.z); P.pitch = Math.asin(clamp(d.y, -1, 1)); },
@@ -3201,7 +3404,7 @@ async function boot() {
   buildEnvMaps();
   Game.state = 'menu'; Game.mem = Game.newMem(7, 0); P.cine = { menu: true }; Game.buildAt({ kind: 'intro', visit: 0 });
   refreshMenu(); UI.screen('menu'); $('#fade').style.opacity = 0; setTimeout(() => $('#fade').classList.add('hidden'), 2500);
-  requestAnimationFrame(frame); window.__DS.ready = true;
+  requestAnimationFrame(frame); Portal.call('loadingStop'); window.__DS.ready = true;
 }
 boot().catch((e) => { console.error(e); $('#boot-t').textContent = 'the dream could not begin'; $('#boot-e').textContent = String(e && e.message || e); });
 </script>
